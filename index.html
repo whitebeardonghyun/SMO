@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SMO</title>
+<meta name="description" content="SMO: 영화와 콘서트 정보, 별점, 리뷰를 한곳에서">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!-- 시작 화면 -->
+<section id="view-home" class="pad" hidden>
+  <header class="top"><span>SMO</span><span class="muted">Seoul, KR</span></header>
+  <div class="home-choices">
+    <a class="choice" href="#movies"><span class="lbl"><span>Movie</span><span>→</span></span><span class="word">영화</span></a>
+    <a class="choice" href="#concerts"><span class="lbl"><span>Concert</span><span>→</span></span><span class="word">콘서트</span></a>
+  </div>
+  <div class="home-foot"><span>©2026 SMO</span><span>영화와 공연을 한곳에서</span></div>
+</section>
+
+<!-- 내부 페이지 -->
+<div id="inner" class="pad" hidden>
+  <header class="top">
+    <a href="#home">SMO</a>
+    <nav aria-label="섹션"><a href="#movies" data-tab="movies">영화,</a><a href="#concerts" data-tab="concerts">콘서트</a></nav>
+  </header>
+  <main class="page" id="page"></main>
+  <footer class="foot"><span>©2026 SMO</span><span>별점·리뷰·댓글은 이 브라우저에만 저장돼요. 예매는 각 극장과 예매처에서 진행돼요. 포스터와 예고편의 권리는 각 배급사에 있어요.</span></footer>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
