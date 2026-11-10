@@ -1,0 +1,25 @@
+rules_version = '2';
+
+// SMO Firestore 보안 규칙
+// Firebase 콘솔 → Firestore Database → 규칙 탭에 이 내용을 그대로 붙여 넣고 [게시]를 누르세요.
+//
+// - 누구나 리뷰를 읽을 수 있어요.
+// - 각 방문자는 익명 로그인으로 받은 자기 문서(reviews/<내 id>)에만 쓸 수 있어요.
+//   (다른 사람의 리뷰·별점·댓글은 고치거나 지울 수 없어요.)
+// - 정해진 항목만, 적당한 크기까지만 저장할 수 있어요.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /reviews/{uid} {
+      allow read: if true;
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['films', 'likes', 'comments', 'hype', 'nick'])
+        && (!('nick' in request.resource.data) || (request.resource.data.nick is string && request.resource.data.nick.size() <= 20));
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

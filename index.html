@@ -28,10 +28,14 @@
     <nav aria-label="섹션"><a href="#movies" data-tab="movies">영화,</a><a href="#concerts" data-tab="concerts">콘서트</a></nav>
   </header>
   <main class="page" id="page"></main>
-  <footer class="foot"><span>©2026 SMO</span><span>별점·리뷰·댓글은 이 브라우저에만 저장돼요. 예매는 각 극장과 예매처에서 진행돼요. 포스터와 예고편의 권리는 각 배급사에 있어요.</span></footer>
+  <footer class="foot"><span>©2026 SMO</span><span><span id="store-note">별점·리뷰·댓글은 이 브라우저에만 저장돼요.</span> 예매는 각 극장과 예매처에서 진행돼요. 포스터와 예고편의 권리는 각 배급사에 있어요.</span></footer>
 </div>
 <div class="toast" id="toast" hidden></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
 <script src="js/data.js"></script>
 <script src="js/app.js"></script>
 </body>
