@@ -106,7 +106,8 @@
   function movieWork(m) {
     const avg = avgOf(m.id);
     const soon = m.rel > 0;
-    const right = soon ? `D-${m.rel}` : (avg ? `★ ${avg.toFixed(1)}` : (m.rel === 0 ? '오늘 개봉' : ''));
+    const hn = hypeCount(m.id);
+    const right = soon ? `D-${m.rel}${hn ? ` · 🍿 ${hn}` : ''}` :(avg ? `★ ${avg.toFixed(1)}` : (m.rel === 0 ? '오늘 개봉' : ''));
     return `<a class="work" href="#movie-${m.id}">${frame(m, 'poster', 1)}<div class="work-head"><span class="t">${esc(m.title)}</span><span class="muted">${right}</span></div></a>`;
   }
   function pageMovies() {
@@ -144,7 +145,7 @@
       ${confirmDelMovie === m.id ? `<span class="muted">이 영화와 포스터를 삭제할까요?</span><button class="link danger" data-movie-act="del-yes">삭제</button><button class="link" data-movie-act="del-no">취소</button>`
         : `<button class="link danger" data-movie-act="del">삭제</button>`}</div>` : '';
     return `<div class="detail-top">
-        <div><h1>${esc(m.title)}</h1><div class="sub">${m.en ? esc(m.en) + ' · ' : ''}${soon ? `개봉 예정 D-${m.rel}` : '상영중'}${m.example ? ' · 예시' : ''}</div>${admin}${soon ? '' : '<div id="rating-box"></div>'}</div>
+        <div><h1>${esc(m.title)}</h1><div class="sub">${m.en ? esc(m.en) + ' · ' : ''}${soon ? `개봉 예정 D-${m.rel}` : '상영중'}${m.example ? ' · 예시' : ''}</div>${admin}${soon ? '<div id="hype-box"></div>' : '<div id="rating-box"></div>'}</div>
         <div class="detail-poster">${frame(m, 'poster', 1)}</div>
       </div>
 
@@ -298,9 +299,9 @@
 
   /* ---------- 리뷰 ---------- */
   // reviews/<viewerId> 문서 하나에 { films: { <영화id>: {rating, text, at}, ... } }
-  const form = { filmId: null, rating: 0, verdict: '', title: '', text: '', editing: false, busy: false, msg: '', err: false, confirmDel: null, filter: 'all', sort: 'new', open: null };
+  const form = { filmId: null, nick: '', rating: 0, verdict: '', title: '', text: '', editing: false, busy: false, msg: '', err: false, confirmDel: null, filter: 'all', sort: 'new', open: null };
   Object.assign(form, { cmOpen: null, cmText: '', cmBusy: false, cmMsg: '', cmConfirm: null });
-  const syncForm = () => { if ($('rv-text')) form.text = $('rv-text').value; if ($('rv-title')) form.title = $('rv-title').value; if ($('cm-text')) form.cmText = $('cm-text').value; };
+  const syncForm = () => { if ($('rv-text')) form.text = $('rv-text').value; if ($('rv-title')) form.title = $('rv-title').value; if ($('cm-text')) form.cmText = $('cm-text').value; if ($('rv-nick')) form.nick = $('rv-nick').value; };
   function reviewsFor(filmId) {
     const out = [];
     reviewDocs.forEach(d => { const r = d.films && d.films[filmId]; if (r && r.rating) out.push({ uid: d.uid, ...r }); });
@@ -312,10 +313,27 @@
   // 👍/👎: 직접 고른 값이 없으면(예전 리뷰) 별점 3점 이상을 👍로 봄
   // 추천: 각 사람의 reviews/<id> 문서 안 likes 맵에 "작성자id~영화id": true 로 저장
   const likeKey = (uid, filmId) => uid + '~' + filmId;
-  const myDoc = () => reviewDocs.find(d => d.uid === myId) || { films: {}, likes: {}, comments: {} };
+  const myDoc = () => reviewDocs.find(d => d.uid === myId) || { films: {}, likes: {}, comments: {}, hype: {} };
+  // 기대돼요: 각 사람의 reviews/<id> 문서 안 hype 맵에 "영화id": true
+  const hypeCount = (filmId) => reviewDocs.filter(d => d.hype && d.hype[filmId]).length;
+  const myHype = (filmId) => !!(myDoc().hype || {})[filmId];
+  function renderHype() {
+    const box = $('hype-box'); if (!box) return;
+    const id = currentRoute().id;
+    const n = hypeCount(id), on = myHype(id);
+    const can = myId && canWrite && storeState === 'ready';
+    box.innerHTML = `<div class="rate-box"><div><span class="muted">기대지수</span>
+      <div class="avg-big">${n}<small>명이 기대하고 있어요</small></div></div>
+      <div><span class="muted">나도</span>${can
+        ? `<button class="hype-btn" data-hype="${esc(id)}" aria-pressed="${on}"><span class="em">🍿</span> ${on ? '기대 중이에요' : '기대돼요'}</button><div class="muted">${on ? '다시 누르면 취소돼요.' : '개봉을 기다린다면 눌러 주세요.'}</div>`
+        : `<div class="muted" style="padding-top:6px">${storeState === 'loading' ? '불러오는 중…' : (storeState === 'off' || !myId) ? '로그인하면 누를 수 있어요.' : '누를 권한이 없어요.'}</div>`}</div></div>`;
+  }
   const myLikes = () => myDoc().likes || {};
   const likeCount = (uid, filmId) => { const k = likeKey(uid, filmId); return reviewDocs.filter(d => d.likes && d.likes[k]).length; };
-  const docBody = (d, patch) => ({ films: d?.films || {}, likes: d?.likes || {}, comments: d?.comments || {}, ...patch });
+  const docBody = (d, patch) => { const b = { films: d?.films || {}, likes: d?.likes || {}, comments: d?.comments || {}, hype: d?.hype || {} }; if (d?.nick) b.nick = d.nick; return { ...b, ...patch }; };
+  let useNick = false;   // GitHub 버전: 이름 대신 닉네임을 써요
+  const savedNick = () => { try { return localStorage.getItem('smo.nick') || ''; } catch { return ''; } };
+  const nickHTML = () => useNick ? `<input type="text" id="rv-nick" class="rv-title" maxlength="20" placeholder="닉네임 (다른 사람에게 보이는 이름, 20자까지)" value="${esc(form.nick || myDoc().nick || savedNick())}">` : '';
   async function saveMyDoc(patch) { await db.doc('reviews/' + myId).set(docBody(myDoc(), patch)); }
   // 댓글: 댓글 쓴 사람의 reviews/<id> 문서 안 comments 맵에 "리뷰작성자id~영화id~댓글id": {text, at}
   function commentsFor(authorUid, filmId) {
@@ -406,6 +424,7 @@
             <button type="button" role="radio" class="bad" data-verdict="bad" aria-checked="${form.verdict === 'bad'}" aria-pressed="${form.verdict === 'bad'}"><span class="em">👎</span> 싫어요</button>
           </div>
           <div class="stars" role="radiogroup" aria-label="별점">${[1,2,3,4,5].map(n => `<button type="button" role="radio" aria-checked="${form.rating === n}" aria-label="${n}점" data-star="${n}" class="${n <= form.rating ? 'on' : ''}">★</button>`).join('')}</div>
+          ${nickHTML()}
           <input type="text" id="rv-title" class="rv-title" maxlength="60" placeholder="제목 (예: 올해 최고의 반전, 기대보다 아쉬웠던 후반부)" value="${esc(form.title)}">
           <textarea id="rv-text" maxlength="1000" placeholder="${form.verdict === 'bad' ? '아쉬웠던 점을 솔직하게 적어 주세요. 스포일러는 피해 주세요.' : '영화를 보고 나서 어땠나요? 스포일러는 피해 주세요.'}">${esc(form.text)}</textarea>
           <div class="form-row">
@@ -498,6 +517,18 @@
     if (fb) { syncForm(); form.filter = fb.dataset.filter; renderReviews(); return; }
     const sb = e.target.closest('[data-sort]');
     if (sb) { syncForm(); form.sort = sb.dataset.sort; renderReviews(); return; }
+    const hb = e.target.closest('[data-hype]');
+    if (hb) {
+      if (hb.disabled) return;
+      hb.disabled = true;
+      const fid = hb.dataset.hype;
+      const hype = { ...(myDoc().hype || {}) };
+      const turningOn = !hype[fid];
+      if (turningOn) hype[fid] = true; else delete hype[fid];
+      try { await saveMyDoc({ hype }); toast(turningOn ? '🍿 기대돼요를 눌렀어요' : '기대돼요를 취소했어요'); }
+      catch (err) { if (err?.code === 'invalid_argument') canWrite = false; toast('저장하지 못했어요.'); renderHype(); }
+      return;
+    }
     const qb = e.target.closest('[data-quick]');
     if (qb) {
       const n = +qb.dataset.quick;
@@ -583,7 +614,9 @@
       const cid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       const comments = { ...(myDoc().comments || {}), [target + '~' + form.filmId + '~' + cid]: { text, at: Date.now() } };
       form.cmBusy = true; form.cmMsg = ''; renderReviews();
-      try { await saveMyDoc({ comments }); form.cmText = ''; toast('댓글을 등록했어요'); }
+      const cpatch = { comments };
+      if (useNick && !myDoc().nick && savedNick()) cpatch.nick = savedNick().slice(0, 20);
+      try { await saveMyDoc(cpatch); form.cmText = ''; toast('댓글을 등록했어요'); }
       catch (err) { if (err?.code === 'invalid_argument') canWrite = false; form.cmMsg = err?.code === 'quota_exceeded' ? '저장 공간이 가득 찼어요.' : '댓글을 등록하지 못했어요.'; }
       finally { form.cmBusy = false; renderReviews(); }
       return;
@@ -598,8 +631,14 @@
     if (form.text.length < 5) { form.msg = '리뷰를 5자 이상 써 주세요.'; form.err = true; renderReviews(); return; }
     form.busy = true; form.msg = ''; form.err = false; renderReviews();
     const films = { ...myFilms(), [form.filmId]: { rating: form.rating, verdict: form.verdict, title: form.title, text: form.text, at: Date.now() } };
+    const patch = { films };
+    if (useNick && $('rv-nick')) {
+      const nick = $('rv-nick').value.trim().slice(0, 20);
+      form.nick = nick;
+      if (nick) { patch.nick = nick; try { localStorage.setItem('smo.nick', nick); } catch {} }
+    }
     try {
-      await saveMyDoc({ films });
+      await saveMyDoc(patch);
       const wasEdit = form.editing;
       form.editing = false; form.rating = 0; form.verdict = ''; form.title = ''; form.text = '';
       toast(wasEdit ? '리뷰를 고쳤어요' : '리뷰를 등록했어요');
@@ -640,15 +679,62 @@
     };
     const suser = {
       id: async () => ME, isOwner: async () => false, canEdit: async () => false,
-      profiles: async (ids) => Object.fromEntries([].concat(ids).map(i => [i, { id: i, name: i === ME ? '나' : '관람객', avatarUrl: blank, isMe: i === ME }]))
+      profiles: async (ids) => { const all = load(); return Object.fromEntries([].concat(ids).map(i => [i, { id: i, name: (all[i] || {}).nick || (i === ME ? '나' : '관람객'), avatarUrl: blank, isMe: i === ME }])); }
     };
     return { db: sdb, user: suser };
   }
 
+  /* ---------- Firebase 저장소 (js/firebase-config.js 에 설정이 있을 때) ----------
+     익명 로그인으로 방문자마다 id를 받고, Firestore의 reviews/<id> 문서에 별점·리뷰·추천·댓글·기대돼요·닉네임을 저장해요.
+     모든 방문자가 같은 데이터를 봐요. */
+  const nicks = {};   // 방문자 id → 닉네임 (리뷰 문서의 nick)
+  async function firebaseBackend() {
+    const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(window.SMO_FIREBASE_CONFIG);
+    const auth = firebase.auth(app);
+    const fs = firebase.firestore(app);
+    const cred = await Promise.race([
+      auth.currentUser ? Promise.resolve({ user: auth.currentUser }) : auth.signInAnonymously(),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('auth timeout')), 8000))
+    ]);
+    const uid = cred.user.uid;
+    const blank = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+    const mapErr = (e) => ({ code: e && e.code === 'permission-denied' ? 'invalid_argument' : e && e.code === 'resource-exhausted' ? 'quota_exceeded' : 'unavailable' });
+    const fdb = {
+      collection: (p) => ({
+        onSnapshot: (cb, onErr) => {
+          if (p === 'movies') { setTimeout(() => cb({ docs: (window.SMO_MOVIES || []).map(m => ({ id: m.id, data: () => m })), metadata: { fromCache: false } }), 0); return () => {}; }
+          return fs.collection(p).onSnapshot({ includeMetadataChanges: false }, (s) => {
+            s.docs.forEach(d => { const n = (d.data() || {}).nick; if (n) nicks[d.id] = n; else delete nicks[d.id]; });
+            cb({ docs: s.docs.map(d => ({ id: d.id, data: () => d.data() })), metadata: { fromCache: s.metadata.fromCache } });
+          }, (e) => { console.warn('Firestore', e); onErr && onErr(mapErr(e)); });
+        }
+      }),
+      doc: (path) => {
+        const [col, id] = path.split('/');
+        return {
+          set: async (body) => { if (col !== 'reviews') throw { code: 'invalid_argument' }; try { await fs.collection(col).doc(id).set(body); } catch (e) { console.warn('Firestore', e); throw mapErr(e); } },
+          delete: async () => { throw { code: 'invalid_argument' }; }
+        };
+      }
+    };
+    const fuser = {
+      id: async () => uid, isOwner: async () => false, canEdit: async () => false,
+      profiles: async (ids) => Object.fromEntries([].concat(ids).map(i => [i, { id: i, name: nicks[i] || (i === uid ? '나' : '관람객'), avatarUrl: blank, isMe: i === uid }]))
+    };
+    return { db: fdb, user: fuser, kind: 'firebase' };
+  }
+
   async function initStore() {
     if (!window.claude?.use) {
-      const s = staticBackend();
-      db = s.db; user = s.user; assets = null;
+      let s = null;
+      if (window.SMO_FIREBASE_CONFIG && window.firebase) {
+        try { s = await firebaseBackend(); }
+        catch (e) { console.warn('Firebase 연결 실패, 이 브라우저 저장으로 바꿔요.', e); toast('공유 저장소에 연결하지 못해서, 이 브라우저에만 저장돼요.'); }
+      }
+      if (!s) s = { ...staticBackend(), kind: 'local' };
+      db = s.db; user = s.user; assets = null; useNick = true;
+      const note = $('store-note');
+      if (note) note.textContent = s.kind === 'firebase' ? '별점·리뷰·댓글은 모든 방문자와 공유돼요.' : '별점·리뷰·댓글은 이 브라우저에만 저장돼요.';
     } else {
       try { [db, user, assets] = await Promise.all(['db', 'user', 'assets'].map(n => window.claude?.use?.(n) ?? null)); } catch { db = null; }
     }
@@ -666,10 +752,10 @@
       render(true);
     }, () => { movieState = 'off'; render(true); });
     db.collection('reviews').onSnapshot(snap => {
-      reviewDocs = snap.docs.map(d => { const x = d.data() || {}; return { uid: d.id, films: x.films || {}, likes: x.likes || {}, comments: x.comments || {} }; });
+      reviewDocs = snap.docs.map(d => { const x = d.data() || {}; return { uid: d.id, films: x.films || {}, likes: x.likes || {}, comments: x.comments || {}, hype: x.hype || {}, nick: x.nick || '' }; });
       storeState = 'ready';
       const r = currentRoute();
-      if (r.view === 'movie') renderSummary();
+      if (r.view === 'movie') { renderSummary(); renderHype(); }
       else if (r.view === 'reviews') { const a = document.activeElement?.id; if (a !== 'rv-text' && a !== 'rv-title' && a !== 'cm-text') renderReviews(); }
       else if (r.view === 'movies') render(true);
     }, () => { storeState = 'error'; renderReviews(); renderSummary(); });
@@ -704,7 +790,7 @@
       const m = findMovie(r.id);
       if (!m) { page.innerHTML = `<div class="intro"><h1>영화</h1><p>${movieState === 'loading' ? '영화 정보를 불러오는 중이에요…' : '이 영화를 찾을 수 없어요. 삭제되었을 수 있어요.'}</p></div><a class="link muted" href="#movies">← 영화 목록</a>`; return; }
       if (form.filmId !== m.id) Object.assign(form, { filmId: m.id, rating: 0, verdict: '', title: '', text: '', editing: false, msg: '', err: false, confirmDel: null, filter: 'all', sort: 'new', open: null, cmOpen: null, cmText: '', cmMsg: '', cmConfirm: null });
-      if (r.view === 'movie') { page.innerHTML = pageMovie(m); renderSummary(); }
+      if (r.view === 'movie') { page.innerHTML = pageMovie(m); renderSummary(); renderHype(); }
       else { page.innerHTML = pageReviews(m); renderReviews(); }
     }
     else if (r.view === 'editor') {
