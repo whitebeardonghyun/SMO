@@ -426,3 +426,153 @@ window.SMO_MOVIES = [
         "poster":  "images/posters/mvmwam1gkqvcr6.webp"
     }
 ];
+
+// ---------------------------------------------------------------
+// 11/16에 추가한 영화 (포스터는 images/posters/영화id.jpg 로 넣고 poster 경로를 적어 주세요)
+// ---------------------------------------------------------------
+window.SMO_MOVIES.push(
+  {
+    id: "mvnfall2", title: "폴2: 데드포인트", en: "FALL 2", date: "2026-11-11", rate: "15", run: 98,
+    genre: "스릴러, 서바이벌", dir: "마이클 스피어리그, 피터 스피어리그",
+    cast: [{ name: "해리엇 슬레이터", role: "잭스" }, { name: "아르세마 토마스", role: "루스" }, { name: "톰 브리트니", role: "" }],
+    syn: "수십 년간 출입이 금지된 해발 3,300m의 산 '콴'.\n\n전작 주인공 샤일로의 동생 잭스와 샤일로의 친구 루스가 그 절벽에 도전한다. 발 디딜 곳 하나 없는 고공에서 두 사람은 살아서 내려가기 위한 사투를 벌인다.\n\n「폴: 600미터」의 후속작으로, 실제 고공 촬영으로 완성한 98분 생존극.",
+    trailer: "", poster: ""
+  },
+  {
+    id: "mvnhexed", title: "헥스: 마녀왕국", en: "Hexed", date: "2026-11-25", rate: "", run: "",
+    genre: "애니메이션, 판타지, 가족", dir: "제이슨 핸드, 조시 트리니다드, 폰 비라선손",
+    cast: [{ name: "헤일리 스타인펠드", role: "빌리 (원어)" }, { name: "라시다 존스", role: "엄마 (원어)" }],
+    syn: "마법을 막아 주던 팔찌가 풀리면서 평범한 소녀 빌리는 자신에게 마법 능력이 있다는 걸 알게 된다.\n\n마녀들의 세계 '헥스'에 들어선 빌리 앞에 자신을 둘러싼 예언과 엄마의 비밀이 드러나고, 강력한 마법 세력이 모녀를 노린다.\n\n「겨울왕국」·「주토피아」 제작진의 디즈니 애니메이션. 오프닝 단편 「릴로 & 스크래치」가 함께 상영된다.",
+    trailer: "https://www.youtube.com/watch?v=TfgeA9uUneg", poster: ""
+  },
+  {
+    id: "mvngongmu", title: "공무도하", en: "", date: "2026-11-25", rate: "15", run: 103,
+    genre: "드라마", dir: "한정국",
+    cast: [{ name: "윤제인", role: "선화" }, { name: "이지석", role: "김동철" }, { name: "이동재", role: "이동수" }, { name: "홍성준", role: "" }],
+    syn: "열여덟 살 선화는 두만강을 건너 남한에 오지만 가족을 잃고 홀로 남는다.\n\n낯선 사회에서 버티던 선화는 가출 청소년들을 만나 함께 지내며 새로운 가족을 이뤄 간다.\n\n무연고 탈북 청소년의 실화와 고대가요 '공무도하가'에서 출발한 한정국 감독의 장편 데뷔작. 유바리 국제 판타스틱 영화제 대상 수상작.",
+    trailer: "", poster: ""
+  },
+  {
+    id: "mvndoomsday", title: "어벤져스: 둠스데이", en: "Avengers: Doomsday", date: "2026-12-16", rate: "", run: "",
+    genre: "액션, SF, 어드벤처", dir: "안소니 루소, 조 루소",
+    cast: [{ name: "로버트 다우니 주니어", role: "닥터 둠" }, { name: "크리스 에반스", role: "" }, { name: "크리스 헴스워스", role: "" }, { name: "페드로 파스칼", role: "" }, { name: "플로렌스 퓨", role: "" }, { name: "톰 히들스턴", role: "" }],
+    syn: "「어벤져스: 엔드게임」 이후 7년 만의 어벤져스 신작.\n\n여러 우주가 무너지는 위기 속에서 멀티버스의 히어로들이 한자리에 모이고, 로버트 다우니 주니어가 최강의 빌런 닥터 둠으로 돌아온다.\n\n국내는 북미보다 이틀 빠른 12월 16일에 개봉한다.",
+    trailer: "https://www.youtube.com/watch?v=Wkg430JD9Yo", poster: ""
+  },
+  {
+    id: "mvndune3", title: "듄: 파트 3", en: "Dune: Part Three", date: "2026-12-16", rate: "", run: 151,
+    genre: "SF, 어드벤처", dir: "드니 빌뇌브",
+    cast: [{ name: "티모시 샬라메", role: "폴 아트레이데스" }, { name: "젠데이아", role: "챠니" }, { name: "로버트 패틴슨", role: "" }, { name: "플로렌스 퓨", role: "" }, { name: "안야 테일러-조이", role: "" }, { name: "제이슨 모모아", role: "" }],
+    syn: "소설 「듄 메시아」를 바탕으로 한 「듄」 3부작의 마지막 이야기.\n\n황제의 자리에 오른 폴 아트레이데스와 그를 둘러싼 우주의 운명이 마무리된다.\n\n한국에서 세계 최초로 개봉하며, 러닝타임은 3부작 중 가장 짧은 2시간 31분이다.",
+    trailer: "https://www.youtube.com/watch?v=s_iIr07coIw", poster: ""
+  }
+);
+
+// ---------------------------------------------------------------
+// 극장 특전 (2026년 11월 16일 기준으로 조사, 최신 주차가 맨 위)
+// 대부분 선착순·일부 지점 한정이고 조기 소진될 수 있어요. 새 특전이 나오면 맨 위에 한 줄 추가하세요.
+//
+// 형식: { text: "주차(기간) 특전 내용 · 극장", link: "사진이 실린 공식 안내·기사 주소", img: "images/perks/파일이름.jpg" }
+//  - 기간은 "(11/11~11/17)"처럼 적으면 날짜가 지났을 때 자동으로 '지난 특전'으로 옮겨져요.
+//    날짜 없이 "3주차"만 적으면 개봉일 기준으로 계산해요.
+//  - img 는 사용 허락을 받은 사진을 images/perks 폴더에 넣고 경로를 적으면, 썸네일과 원본 크기 보기가 생겨요.
+// ---------------------------------------------------------------
+const TS = 'https://www.topstarnews.net/news/articleView.html?idxno=';
+window.SMO_PERKS = {
+  // 극장판 치이카와 인어 섬의 비밀
+  "mvmwakt0bnl6z5": [
+    { text: "7주차 평일(11/11~11/17) 봉봉드롭씰 · CGV·롯데·메가박스·씨네Q 일부", link: TS + "16271646" },
+    { text: "5주차 주말(10/31~11/6) 필름 스틸컷 PET 북마크 3종 세트", link: TS + "16260622" },
+    { text: "4주차 아크릴 키링 · 주말 아코디언 엽서", link: TS + "16251106" },
+    { text: "3주차 평일 비밀책 (본문 번역책 포함)", link: TS + "16244382" },
+    { text: "1주차(10/3~10/9) CGV 티켓 세트 · 롯데 시그니처 아트카드 · 메가박스 오리지널 티켓+띠부씰", link: "https://www.ggilbo.com/news/articleView.html?idxno=1183931" }
+  ],
+  // 하트 오브 비스트
+  "mvmwakx9e1idzq": [
+    { text: "3주차(11/11~11/17) 흑백 A3 포스터 · CGV 9개 지점", link: TS + "16272983" },
+    { text: "2주차(11/4~11/10) 'I GOT YOU' A3 포스터 · 롯데시네마 21개 지점", link: TS + "16267129" },
+    { text: "1주차(10/28~11/3) A3 포스터" }
+  ],
+  // 명탐정코난 : 30호 살인 사건
+  "mvmwaloqmsn1as": [
+    { text: "2주차 주말(11/14~11/17) A3 티저 포스터 · CGV 36개 지점", link: TS + "16274486" },
+    { text: "2주차(11/11~11/17) 캐릭터 포토카드 4종 세트(16종 중 랜덤) · CGV", link: TS + "16270148" },
+    { text: "1주차 주말(11/7~11/10) A5 미니 캐릭터 포스터 스티커 · CGV", link: TS + "16267193" },
+    { text: "1주차(11/5~11/10) A3 메인 포스터 · CGV", link: TS + "16264632" }
+  ],
+  // 최종면접
+  "mvmwalrb9uy8r8": [
+    { text: "2주차(11/11~11/17) A3 '비밀 폭로 포스터' · CGV·롯데·메가박스·씨네Q", link: TS + "16273009" },
+    { text: "개봉주(~11/17) 롯데시네마 시그니처 아트카드 · 메가박스 A3 메인 포스터(11/4~11/10)", link: TS + "16268407" }
+  ],
+  // 와일드 호스 나인
+  "mvmwaltzmbbcyx": [
+    { text: "2주차(11/11~11/17) 오리지널 A3 포스터 · CGV·롯데·메가박스 등", link: TS + "16273752" },
+    { text: "롯데시네마 오리지널 경품 (11/4~11/24)", link: "https://www.lottecinema.co.kr/NLCHS/Event" }
+  ],
+  // 타짜: 벨제붑의 노래
+  "mvmwalwfvkni78": [
+    { text: "7주차 '타짜' 명대사 스티커 (2종 중 랜덤) · CGV·롯데·메가박스 일부", link: TS + "16268912" },
+    { text: "3주차 허영만 화백 만화 버전 A3 포스터", link: "https://supple.kr/news/cmuz67xiz007yk02mpdp5mmwu" }
+  ],
+  // 헝거게임 50번째 추첨의 날 (11/18 개봉)
+  "mvmwam1gkqvcr6": [
+    { text: "개봉 1주차(11/18~11/24) 롯데시네마 시그니처 아트카드 · 메가박스 오리지널 티켓 · CGV 코믹콘 포스터", link: "https://www.slist.kr/news/articleView.html?idxno=782247" },
+    { text: "메가박스 돌비시네마 관람 시 돌비 포스터 (11/18~, 선착순)", link: "https://www.specialtimes.co.kr/news/articleView.html?idxno=481499" },
+    { text: "메가박스 얼리버드 추첨 이벤트 (~11/17, 원작 도서·핀뱃지 등)", link: "https://www.slist.kr/news/articleView.html?idxno=782247" }
+  ],
+  // 극장판 마법소녀 마도카☆마기카 〈발푸르기스의 회천〉 (롯데시네마 단독)
+  "mvclmadoka": [
+    { text: "2주차(11/11~11/24) 스페셜 아트카드 2탄 · 롯데시네마 (1인 최대 2개)", link: TS + "16272130" },
+    { text: "2주차 주말(11/14~11/17) 35mm 필름컷 · 롯데시네마 일부", link: TS + "16274736" },
+    { text: "개봉주(11/4~11/17) 스페셜 아트카드 1탄 · 광음시네마·MX4D 전용 A3 포스터", link: TS + "16260963" }
+  ],
+  // 모자 쓴 고양이
+  "mvclcatinhat": [
+    { text: "2주차 주말(11/14~11/17) 스페셜 퍼즐 · CGV 용산아이파크몰, 천안펜타포트", link: TS + "16275778" },
+    { text: "개봉주(11/6~11/12) 모자 쓴 고양이 스티커 · CGV·롯데·메가박스 일부", link: TS + "16269003" }
+  ],
+  // 마더 메리
+  "mvclmothermary": [
+    { text: "1주차(11/11~11/17) 앤 해서웨이 캐릭터 A3 포스터 (홀로그램 코팅)", link: TS + "16273167" },
+    { text: "메가박스 오리지널 티켓 (11/11~11/24)", link: TS + "16273441" }
+  ]
+};
+window.SMO_MOVIES.forEach(m => { if (window.SMO_PERKS[m.id]) m.perks = window.SMO_PERKS[m.id]; });
+
+// ---------------------------------------------------------------
+// 예매 현황 (실제 보도 수치, 2026년 11월 16일 조사)
+//  - rate  : 예매율. 영화관입장권통합전산망(KOBIS) 기준 = CGV·롯데시네마·메가박스 등 전국 극장 합산
+//  - gender: 성별 예매 비율 (f 여성, m 남성)
+//  - ages  : 연령대별 예매 비율. list 는 [이름, 퍼센트] 목록. 이름: 10대 / 20대 / 30대 / 40대 / 50대 이상 / 40대 이상 / 기타
+//  - basis : 어떤 기준의 숫자인지, link: 출처 기사
+//  롯데시네마·메가박스 숫자를 따로 모으면 basis 를 바꾸고 합산한 값을 넣으면 돼요.
+// ---------------------------------------------------------------
+const EC = 'https://www.econovill.com/news/articleView.html?idxno=';
+window.SMO_STATS = {
+  // 명탐정코난 : 30호 살인 사건
+  "mvmwaloqmsn1as": {
+    gender: { f: 68, m: 32, basis: "CGV 예매 기준 · 11/8 무렵", link: EC + "756431" },
+    ages: { list: [["10대", 11], ["20대", 52], ["30대", 16], ["40대", 14], ["50대 이상", 6]], basis: "CGV 예매 기준 · 11/8 무렵", link: EC + "756431" }
+  },
+  // 극장판 치이카와 인어 섬의 비밀
+  "mvmwakt0bnl6z5": {
+    rate: { pct: 8.9, rank: 3, basis: "KOBIS 전체 극장 합산 · 11/16 오전", link: EC + "757311" },
+    gender: { f: 72, m: 28, basis: "CGV 예매 기준 · 개봉 1주차", link: "https://www.koreadaily.com/article/20261009140053722" },
+    ages: { list: [["20대", 41], ["30대", 21], ["기타", 38]], basis: "CGV 관객 기준 · 239만 돌파 시점", link: "https://www.2news.co.kr/news/articleView.html?idxno=31183" }
+  },
+  // 타짜: 벨제붑의 노래
+  "mvmwalwfvkni78": {
+    gender: { f: 44, m: 56, basis: "CGV 예매 기준 · 10월 초", link: "https://www.slist.kr/news/articleView.html?idxno=776284" },
+    ages: { list: [["10대", 2], ["20대", 27], ["30대", 31], ["40대 이상", 40]], basis: "CGV 예매 기준 · 200만 돌파 시점 (40대 이상은 나머지 합)", link: "https://www.mt.co.kr/entertainment/2026/10/26/2026102610327252084" }
+  },
+  // 폭설 (11/18 개봉)
+  "mvmwalyw856aen": {
+    rate: { pct: 16.8, rank: 2, audience: 32071, basis: "KOBIS 전체 극장 합산 · 11/16 0시", link: EC + "757311" }
+  },
+  // 헝거게임 50번째 추첨의 날 (11/18 개봉)
+  "mvmwam1gkqvcr6": {
+    rate: { pct: 8.2, rank: 4, basis: "KOBIS 전체 극장 합산 · 11/16 보도", link: "https://www.segye.com/newsView/20261116513903" }
+  }
+};
+window.SMO_MOVIES.forEach(m => { if (window.SMO_STATS[m.id]) m.stats = window.SMO_STATS[m.id]; });

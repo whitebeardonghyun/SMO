@@ -42,7 +42,17 @@
     { id: 'c5', title: '겨울 협주곡의 밤', en: 'WINTER CONCERTO', d: 17, tm: '19:30', genre: '클래식', venue: '예술의전당 콘서트홀', city: '서울', price: '30,000–120,000원', c: ['#0D1B2A', '#778DA9'], lineup: ['서울 챔버 오케스트라', '피아니스트 이서윤'], desc: '비발디 〈사계〉 중 겨울과 라흐마니노프 피아노 협주곡 2번을 연주하는 연말 클래식 공연.' },
     { id: 'c6', title: 'STARLINE 〈ORBIT〉', en: 'ORBIT', d: 24, tm: '18:00', genre: 'K-POP', venue: '인스파이어 아레나', city: '인천', price: '165,000원', c: ['#10002B', '#9D4EDD'], lineup: ['STARLINE'], desc: '우주를 콘셉트로 한 대형 무대 연출로 꾸민 STARLINE의 두 번째 단독 콘서트.' }
   ];
-  CONCERTS.forEach(c => c.dateObj = addDays(today, c.d));
+  // 실제 공연 (공연 실황 영화 포함). date 가 있으면 그 날짜를 써요.
+  CONCERTS.push({
+    id: 'c7', real: true, title: '임영웅 | 아임 히어로 더 스타디움 2', en: 'IM HERO THE STADIUM 2', date: '2026-11-18', tm: '', genre: '공연 실황 영화',
+    venue: 'CGV 단독 (2D · SCREENX)', city: '전국', price: 'CGV 관람료', c: ['#0B3D91', '#5BC0EB'], lineup: ['임영웅'],
+    desc: '가수 임영웅의 2026 스타디움 콘서트 실황을 극장에서 다시 만나는 공연 영화. 무대 위 공연과 팬 \'영웅시대\'와 함께한 순간들을 큰 화면과 사운드로 담았어요. 러닝타임 144분, 전체 관람가. 전국 CGV 단독 개봉이며, 11/16 기준 예매율 26.1%로 전체 1위예요.',
+    trailer: 'https://www.youtube.com/watch?v=U6cGSBne2Gs'
+  });
+  CONCERTS.forEach(c => {
+    c.dateObj = c.date ? parseYmd(c.date) : addDays(today, c.d);
+    c.d = Math.round((c.dateObj - today) / 86400000);
+  });
 
   /* ---------- 상태 ---------- */
   let db = null, user = null, assets = null, myId = null, isOwner = false, isAdmin = false;
@@ -75,7 +85,11 @@
   const posterSrc = (m) => m.poster || (m.posterId ? '/_blob/' + m.posterId : '');
   function frame(item, kind, n, opts = {}) {
     const src = opts.src || posterSrc(item);
-    if (src) return `<div class="frame ${kind} ${opts.blur ? 'blur' : ''}"><img src="${esc(src)}" alt="${kind === 'poster' ? esc(item.title) + ' 포스터' : ''}" loading="lazy" onerror="this.remove()"></div>`;
+    if (src) {
+      // 이미지를 못 불러오면 검은 칸 대신 제목이 적힌 그라데이션이 보이도록 뒤에 깔아 둠
+      const cc = item.c || palette(item.id);
+      return `<div class="frame ${kind} ${opts.blur ? 'blur' : ''}" style="--p-bg:linear-gradient(160deg, ${cc[0]}, ${cc[1]})">${kind === 'poster' ? `<span class="fe">${esc(item.en || '')}</span><span class="ft">${esc(item.title)}</span>` : ''}<img src="${esc(src)}" alt="${kind === 'poster' ? esc(item.title) + ' 포스터' : ''}" loading="lazy" onerror="this.remove()"></div>`;
+    }
     const r = seeded(item.id + n);
     const angle = Math.floor(r() * 360);
     const c = item.c || palette(item.id);
@@ -108,7 +122,7 @@
     const soon = m.rel > 0;
     const hn = hypeCount(m.id);
     const right = soon ? `D-${m.rel}${hn ? ` · 🍿 ${hn}` : ''}` :(avg ? `★ ${avg.toFixed(1)}` : (m.rel === 0 ? '오늘 개봉' : ''));
-    return `<a class="work" href="#movie-${m.id}">${frame(m, 'poster', 1)}<div class="work-head"><span class="t">${esc(m.title)}</span><span class="muted">${right}</span></div></a>`;
+    return `<a class="work" href="#movie-${m.id}">${frame(m, 'poster', 1)}<div class="work-head"><span class="t fit" data-min="9">${esc(m.title)}</span><span class="muted">${right}</span></div></a>`;
   }
   function pageMovies() {
     const all = allMovies();
@@ -118,9 +132,10 @@
     const exNote = showingExamples() ? (isAdmin ? ' 지금은 예시 영화가 보여요. 첫 영화를 등록하면 예시는 사라져요.' : ' 지금 보이는 영화는 예시예요.') : '';
     if (movieState === 'loading') return `<div class="intro"><h1>영화</h1><p>영화 목록을 불러오는 중이에요…</p></div>`;
     return `<div class="intro"><h1>영화 (${all.length})</h1><div><p>상영중인 영화와 개봉 예정작이에요. 포스터를 누르면 시놉시스, 예고편, 정보, 리뷰를 볼 수 있어요.${exNote}</p>${adminBar}</div></div>
-      <div class="group-label"><span>상영중</span><span>${now.length}</span></div>
+      ${subNav('movies')}
+      <div class="group-label" id="grp-now"><span>상영중</span><span>${now.length}</span></div>
       ${now.length ? `<div class="works">${now.map(movieWork).join('')}</div>` : `<div class="muted">상영중인 영화가 없어요.</div>`}
-      <div class="group-label"><span>개봉 예정</span><span>${soon.length}</span></div>
+      <div class="group-label" id="grp-soon"><span>개봉 예정</span><span>${soon.length}</span></div>
       ${soon.length ? `<div class="works">${soon.map(movieWork).join('')}</div>` : `<div class="muted">개봉 예정인 영화가 없어요.</div>`}`;
   }
 
@@ -145,38 +160,41 @@
       ${confirmDelMovie === m.id ? `<span class="muted">이 영화와 포스터를 삭제할까요?</span><button class="link danger" data-movie-act="del-yes">삭제</button><button class="link" data-movie-act="del-no">취소</button>`
         : `<button class="link danger" data-movie-act="del">삭제</button>`}</div>` : '';
     return `<div class="detail-top">
-        <div><h1>${esc(m.title)}</h1><div class="sub">${m.en ? esc(m.en) + ' · ' : ''}${soon ? `개봉 예정 D-${m.rel}` : '상영중'}${m.example ? ' · 예시' : ''}</div>${admin}${soon ? '<div id="hype-box"></div>' : '<div id="rating-box"></div>'}</div>
+        <div><h1 class="fit" data-min="18">${esc(m.title)}</h1><div class="sub">${m.en ? esc(m.en) + ' · ' : ''}${soon ? `개봉 예정 D-${m.rel}` : '상영중'}${m.example ? ' · 예시' : ''}</div>${admin}${soon ? '<div id="hype-box"></div>' : '<div id="rating-box"></div>'}</div>
         <div class="detail-poster">${frame(m, 'poster', 1)}</div>
       </div>
 
-      <div class="group-label"><span>시놉시스</span><span>01</span></div>
-      ${m.syn ? `<p class="syn-big">${esc(m.syn)}</p>` : `<div class="muted">등록된 시놉시스가 없어요.</div>`}
-
-      <div class="group-label"><span>예고편</span><span>02</span></div>
-      ${trailerBlock(m)}
-
-      <div class="group-label"><span>정보</span><span>03</span></div>
+      <div class="group-label"><span>정보</span><span>01</span></div>
       <div class="rows">
         <div class="r"><span>개봉일</span><span>${fmtDate(m.relDate)}${soon ? ` · D-${m.rel}` : ''}</span></div>
         ${m.genre ? `<div class="r"><span>장르</span><span>${esc(m.genre)}</span></div>` : ''}
         ${m.rate || m.run ? `<div class="r"><span>등급 / 시간</span><span>${m.rate ? rateLabel(m.rate) : ''}${m.rate && m.run ? ' · ' : ''}${m.run ? m.run + '분' : ''}</span></div>` : ''}
         ${m.dir ? `<div class="r"><span>감독</span><span>${esc(m.dir)}</span></div>` : ''}
         ${m.cast && m.cast.length ? `<div class="r"><span>출연</span><span class="list">${m.cast.map(c => `<span><span>${esc(c.name)}</span><span class="muted">${esc(c.role || '')}</span></span>`).join('')}</span></div>` : ''}
+        ${perksOf(m).length ? `<div class="r"><span>특전</span>${perkRowHTML(m)}</div>` : ''}
         ${soon ? '' : `<div class="r"><span>예매</span><span class="links">
           <a class="link" href="https://www.cgv.co.kr/" target="_blank" rel="noopener">CGV ↗</a>
           <a class="link" href="https://www.lottecinema.co.kr/" target="_blank" rel="noopener">롯데시네마 ↗</a>
           <a class="link" href="https://www.megabox.co.kr/" target="_blank" rel="noopener">메가박스 ↗</a></span></div>`}
       </div>
 
-      <div class="group-label"><span>리뷰</span><span>04</span></div>
-      ${soon ? `<div class="note">리뷰는 개봉 후에 남길 수 있어요.</div>` : `<section id="review-summary"></section>`}
+      ${m.stats ? `<div class="group-label"><span>예매 현황</span><span>📊</span></div>${statsHTML(m)}` : ''}
+
+      <div class="tr-rv">
+        <div class="tr-col"><div class="group-label"><span>예고편</span><span>02</span></div>${trailerBlock(m)}</div>
+        <div class="rv-col"><div class="group-label"><span>리뷰</span><span>03</span></div>
+          ${soon ? `<div class="note">리뷰는 개봉 후에 남길 수 있어요. 개봉을 기다린다면 위의 🍿 기대돼요를 눌러 주세요.</div>` : `<section id="review-summary"></section>`}</div>
+      </div>
+
+      <div class="group-label"><span>시놉시스</span><span>04</span></div>
+      ${m.syn ? `<p class="syn-big">${esc(m.syn)}</p>` : `<div class="muted">등록된 시놉시스가 없어요.</div>`}
       <div class="section-gap"><a class="link muted" href="#movies">← 영화 목록</a></div>`;
   }
 
   /* ---------- 페이지: 리뷰 ---------- */
   function pageReviews(m) {
     return `<div class="detail-top">
-        <div><div class="sub" style="margin:0 0 14px">리뷰</div><h1>${esc(m.title)}</h1><div class="sub">${m.en ? esc(m.en) + ' · ' : ''}${fmtDate(m.relDate)} 개봉</div></div>
+        <div><div class="sub" style="margin:0 0 14px">리뷰</div><h1 class="fit" data-min="18">${esc(m.title)}</h1><div class="sub">${m.en ? esc(m.en) + ' · ' : ''}${fmtDate(m.relDate)} 개봉</div></div>
         <div class="detail-poster small">${frame(m, 'poster', 1)}</div>
       </div>
       <div class="group-label"><span>관람객 리뷰</span><span>👍 · 👎</span></div>
@@ -207,6 +225,7 @@
         <div class="r"><label for="f-cast">출연</label><div><textarea id="f-cast" rows="4" placeholder="이름 / 배역&#10;예: 송강호 / 기택">${esc(castText)}</textarea><div class="hint">한 줄에 한 명씩, ‘이름 / 배역’으로 적어 주세요. 배역은 생략해도 돼요.</div></div></div>
         <div class="r"><label for="f-syn">시놉시스</label><textarea id="f-syn" rows="5" maxlength="1500">${esc(v.syn)}</textarea></div>
         <div class="r"><label for="f-trailer">예고편 (YouTube 주소)</label><div><input type="url" id="f-trailer" placeholder="https://www.youtube.com/watch?v=..." value="${esc(v.trailer)}"><div class="hint" id="trailer-hint">YouTube에서 예고편 영상을 열고 주소창의 주소나 ‘공유’ 링크를 붙여 넣어 주세요.</div></div></div>
+        <div class="r"><label for="f-perks">특전</label><div><textarea id="f-perks" rows="3" maxlength="600" placeholder="예: 1주차 A3 포스터 (CGV)&#10;2주차 아트카드 (메가박스)">${esc(perksOf(v).map(p => p.text).join('\n'))}</textarea><div class="hint">한 줄에 하나씩 적어 주세요. 상단 메뉴의 ‘특전’에 표시돼요.</div></div></div>
         <div class="editor-actions">
           <span class="msg ${ed.err ? 'err' : ''}" id="ed-msg">${esc(ed.msg)}</span>
           <span style="display:flex;gap:14px;align-items:center"><a class="link muted" href="${m ? '#movie-' + m.id : '#movies'}">취소</a><button type="submit" class="submit" id="ed-submit">${m ? '변경 저장' : '영화 등록'}</button></span>
@@ -231,7 +250,10 @@
     const body = {
       title, en: $('f-en').value.trim(), date, rate: $('f-rate').value, run: Math.max(0, parseInt($('f-run').value, 10) || 0) || '',
       genre: $('f-genre').value.trim(), dir: $('f-dir').value.trim(), cast, syn: $('f-syn').value.trim(),
-      trailer: tid ? ytUrl(tid) : '', posterId: existing?.posterId || '', createdAt: existing?.createdAt || Date.now(), updatedAt: Date.now()
+      trailer: tid ? ytUrl(tid) : '', perks: ($('f-perks')?.value || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 10).map(t => {
+        const old = existing ? perksOf(existing).find(p => p.text === t) : null;   // 글을 그대로 두면 출처 링크·사진도 유지
+        return old && (old.link || old.img) ? { text: t, link: old.link || '', img: old.img || '' } : t;
+      }), posterId: existing?.posterId || '', createdAt: existing?.createdAt || Date.now(), updatedAt: Date.now()
     };
     ed.busy = true; $('ed-submit').disabled = true;
     let uploadedId = null;
@@ -277,20 +299,21 @@
   /* ---------- 페이지: 콘서트 ---------- */
   function pageConcerts() {
     const list = [...CONCERTS].sort((a, b) => a.d - b.d);
-    return `<div class="intro"><h1>콘서트 (${list.length})</h1><p>다가오는 공연이에요. 포스터를 누르면 공연 정보를 볼 수 있어요. 지금 보이는 공연은 예시예요.</p></div>
+    return `<div class="intro"><h1>콘서트 (${list.length})</h1><p>다가오는 공연이에요. 포스터를 누르면 공연 정보를 볼 수 있어요. 임영웅 공연 실황 영화를 뺀 나머지 공연은 예시예요.</p></div>
       <div class="group-label"><span>다가오는 공연</span><span>${list.length}</span></div>
-      <div class="works">${list.map(c => `<a class="work" href="#concert-${c.id}">${frame(c, 'poster', 1)}<div class="work-head"><span class="t">${esc(c.title)}</span><span class="muted">${c.dateObj.getMonth() + 1}.${c.dateObj.getDate()} ${esc(c.city)}</span></div></a>`).join('')}</div>`;
+      <div class="works">${list.map(c => `<a class="work" href="#concert-${c.id}">${frame(c, 'poster', 1)}<div class="work-head"><span class="t fit" data-min="9">${esc(c.title)}</span><span class="muted">${c.dateObj.getMonth() + 1}.${c.dateObj.getDate()} ${esc(c.city)}</span></div></a>`).join('')}</div>`;
   }
   function pageConcert(c) {
     return `<div class="detail-top">
-        <div><h1>${esc(c.title)}</h1><div class="sub">${esc(c.en)} · 예시</div></div>
+        <div><h1 class="fit" data-min="18">${esc(c.title)}</h1><div class="sub">${esc(c.en)}${c.real ? '' : ' · 예시'}</div></div>
         <div class="rows">
-          <div class="r"><span>일시</span><span>${fmtKo(c.dateObj)} ${c.tm} · D-${c.d}</span></div>
+          <div class="r"><span>일시</span><span>${fmtKo(c.dateObj)} ${c.tm}${c.d > 0 ? ` · D-${c.d}` : c.d === 0 ? ' · 오늘' : ' · 상영 중'}</span></div>
           <div class="r"><span>장소</span><span>${esc(c.venue)}, ${esc(c.city)}</span></div>
           <div class="r"><span>장르</span><span>${esc(c.genre)}</span></div>
           <div class="r"><span>가격</span><span>${esc(c.price)}</span></div>
           <div class="r"><span>출연</span><span class="list">${c.lineup.map(n => `<span>${esc(n)}</span>`).join('')}</span></div>
           <div class="r"><span>소개</span><p>${esc(c.desc)}</p></div>
+          ${ytId(c.trailer || '') ? `<div class="r"><span>예고편</span><span class="links"><a class="link" href="${ytUrl(ytId(c.trailer))}" target="_blank" rel="noopener">YouTube에서 보기 ↗</a></span></div>` : ''}
         </div>
       </div>
       <div class="big-frames">${frame(c, 'poster', 1)}<div class="stack">${frame(c, 'still', 2)}${frame(c, 'still', 3)}</div></div>
@@ -472,13 +495,13 @@
           </form>${form.cmMsg ? `<div class="msg err">${esc(form.cmMsg)}</div>` : ''}` : `<div class="muted cm-empty">댓글을 쓰려면 로그인한 계정으로, 참여자(Contributor) 이상 권한이 있어야 해요.</div>`}
         </div>`;
       return `<article class="post ${open ? 'open' : ''}">
-        <div class="lk"><b>${n}</b><span>추천</span></div>
+        <div class="lk"><b>${n}</b><span>공감</span></div>
         <div class="body">
           <div class="pt">${vtag(r)} <span>${esc(r.title || (r.text || '').slice(0, 30) || '제목 없음')}${cms.length ? ` <em class="cm-count">[${cms.length}]</em>` : ''}</span></div>
           ${r.text ? `<p class="ex" data-open="${esc(r.uid)}" title="${open ? '접기' : '전체 보기'}">${esc(r.text)}</p>` : ''}
           <div class="meta">${starsRead(r.rating)}<span>·</span><img alt="" data-avatar="${esc(r.uid)}" src="data:image/gif;base64,R0lGODlhAQABAAAAACw="><span data-name="${esc(r.uid)}">관람객</span>${isMe ? '<span>(나)</span>' : ''}<span>·</span><span class="when">${r.at ? fmtDate(new Date(r.at)) : ''}</span></div>
           <div class="acts">
-            ${!isMe && myId && canWrite && storeState === 'ready' ? `<button class="like-btn" data-like="${esc(r.uid)}" aria-pressed="${liked}">${liked ? '추천함' : '추천'} ${n}</button>` : ''}
+            ${!isMe && myId && canWrite && storeState === 'ready' ? `<button class="like-btn" data-like="${esc(r.uid)}" aria-pressed="${liked}">♥ ${liked ? '공감함' : '공감'} ${n}</button>` : ''}
             <button class="cm-toggle" data-cm-toggle="${esc(r.uid)}" aria-expanded="${cmOpen}">댓글 ${cms.length}${cmOpen ? ' 접기' : ''}</button>
             ${acts}
           </div>
@@ -489,7 +512,7 @@
 
     const tools = all.length ? `<div class="rv-tools">
         <div class="seg" role="group" aria-label="리뷰 종류">${[['all', '전체', all.length], ['good', '👍 좋아요', goodN], ['bad', '👎 싫어요', all.length - goodN]].map(([k, l, c]) => `<button data-filter="${k}" aria-pressed="${form.filter === k}">${l} ${c}</button>`).join('')}</div>
-        <div class="seg" role="group" aria-label="정렬">${[['new', '최신순'], ['likes', '추천순'], ['high', '별점 높은순'], ['low', '별점 낮은순']].map(([k, l]) => `<button data-sort="${k}" aria-pressed="${form.sort === k}">${l}</button>`).join('')}</div>
+        <div class="seg" role="group" aria-label="정렬">${[['new', '최신순'], ['likes', '공감순'], ['high', '별점 높은순'], ['low', '별점 낮은순']].map(([k, l]) => `<button data-sort="${k}" aria-pressed="${form.sort === k}">${l}</button>`).join('')}</div>
       </div>` : '';
     box.innerHTML = `${summaryHTML(st)}${formHTML}${tools}${listHTML}`;
     fillNames([...new Set([...all.map(r => r.uid), ...(form.cmOpen ? commentsFor(form.cmOpen, id).map(c => c.by) : [])])]);
@@ -566,7 +589,7 @@
       const likes = { ...myLikes() };
       if (likes[k]) delete likes[k]; else likes[k] = true;
       try { await saveMyDoc({ likes }); }
-      catch (err) { if (err?.code === 'invalid_argument') canWrite = false; toast('추천하지 못했어요. 권한이 없거나 연결이 끊겼어요.'); renderReviews(); }
+      catch (err) { if (err?.code === 'invalid_argument') canWrite = false; toast('공감하지 못했어요. 권한이 없거나 연결이 끊겼어요.'); renderReviews(); }
       return;
     }
     const star = e.target.closest('#rv-form [data-star]');
@@ -757,16 +780,184 @@
       const r = currentRoute();
       if (r.view === 'movie') { renderSummary(); renderHype(); }
       else if (r.view === 'reviews') { const a = document.activeElement?.id; if (a !== 'rv-text' && a !== 'rv-title' && a !== 'cm-text') renderReviews(); }
-      else if (r.view === 'movies') render(true);
+      else if (r.view === 'list') render(true);
     }, () => { storeState = 'error'; renderReviews(); renderSummary(); });
+  }
+
+  /* ---------- 상단 메뉴 패널 ---------- */
+  const FOCUS = { movies: 'sec-movies', concerts: 'sec-concerts', 'movies-now': 'grp-now', 'movies-soon': 'grp-soon' };
+  // 특전 항목: 글자만 있어도 되고, { text, link(출처·사진 페이지), img(사진 파일) } 형태도 돼요
+  const perksOf = (m) => {
+    const raw = Array.isArray(m.perks) ? m.perks : (m.perks ? String(m.perks).split('\n') : []);
+    return raw.map(p => typeof p === 'string' ? { text: p.trim() } : (p && (p.text || p.t)) ? { text: String(p.text || p.t).trim(), link: p.link || '', img: p.img || '' } : null).filter(p => p && p.text);
+  };
+  const shortDate = (d) => `${d.getMonth() + 1}.${String(d.getDate()).padStart(2, '0')}`;
+  const cut = (s, n) => s.length > n ? s.slice(0, n) + '…' : s;
+  // 특전 기간 계산: "(11/11~11/17)" 같은 날짜가 있으면 그대로, "3주차"처럼 주차만 있으면 개봉일 기준으로 계산
+  function perkInfo(m, p) {
+    const rel = m.relDate || today;
+    const y = rel.getFullYear();
+    const mk = (mo, d) => { const x = new Date(y, mo - 1, d); if (x < addDays(rel, -60)) x.setFullYear(y + 1); return x; };
+    let start = null, end = null;
+    const r = p.text.match(/\(\s*(?:(\d{1,2})\/(\d{1,2}))?\s*~\s*(?:(\d{1,2})\/(\d{1,2}))?/);
+    if (r && (r[1] || r[3])) {
+      if (r[1]) start = mk(+r[1], +r[2]);
+      if (r[3]) end = mk(+r[3], +r[4]);
+      if (!start) start = new Date(0);            // "(~11/17)" → 지금부터 11/17까지
+    } else {
+      const w = p.text.match(/(\d+)\s*주차/);
+      const n = w ? +w[1] : (/개봉주/.test(p.text) ? 1 : 0);
+      start = n ? addDays(rel, 7 * (n - 1)) : rel;  // 주차 정보도 없으면 개봉 첫 주로 봄
+    }
+    if (!end) end = addDays(start.getTime() ? start : rel, 6);
+    const status = today < start ? 'soon' : today > end ? 'past' : 'now';
+    return { ...p, start, end, status };
+  }
+  const perkLabel = { now: '증정 중', soon: '예정', past: '종료' };
+  function perkRowHTML(m) {
+    const list = perksOf(m).map(p => perkInfo(m, p));
+    const cur = list.filter(x => x.status !== 'past').sort((a, b) => (a.status === 'now' ? 0 : 1) - (b.status === 'now' ? 0 : 1));
+    const past = list.filter(x => x.status === 'past');
+    const safeUrl = (u) => /^(https?:\/\/|images\/|\/_blob\/)/.test(u || '') ? u : '';
+    const li = (x) => {
+      const link = safeUrl(x.link), img = safeUrl(x.img);
+      return `<li class="perk ${x.status}"><span class="perk-tag ${x.status}">${perkLabel[x.status]}</span>
+        <span class="perk-t">${esc(x.text)}${link ? ` <a class="perk-link" href="${esc(link)}" target="_blank" rel="noopener">사진·자세히 ↗</a>` : ''}
+        ${img ? `<button type="button" class="perk-img" data-zoom="${esc(img)}" aria-label="특전 사진 크게 보기"><img src="${esc(img)}" alt="${esc(x.text)} 사진" loading="lazy"></button>` : ''}</span></li>`;
+    };
+    return `<div class="perks">
+      ${cur.length ? `<ul>${cur.map(li).join('')}</ul>` : `<div class="muted">지금 증정 중인 특전이 없어요.</div>`}
+      ${past.length ? `<div class="perk-past-label">지난 특전 ${past.length}</div><ul class="past">${past.map(li).join('')}</ul>` : ''}
+    </div>`;
+  }
+  // "2주차 주말(11/14~11/17) A3 티저 포스터 · CGV" → "A3 티저 포스터"
+  const perkShort = (p) => p.replace(/^[^)]*\)\s*/, '').replace(/^(개봉\s*)?\d*\s*주차\s*(평일|주말)?\s*|^개봉주\s*/, '').split(' · ')[0].trim() || p;
+  const flyItem = (href, name, meta) => `<li><a href="${href}"><span class="n fit" data-min="10">${esc(name)}</span>${meta ? `<span class="x">${meta}</span>` : ''}</a></li>`;
+  const flyCol = (title, href, items, empty) => `<div class="fly-col"><h4>${href ? `<a href="${href}">${title}</a>` : title}</h4>${items.length ? `<ul>${items.join('')}</ul>` : `<div class="fly-empty">${empty}</div>`}</div>`;
+  function flyHTML(kind) {
+    if (kind === 'movies') {
+      const all = allMovies();
+      if (!all.length) return `<div class="fly-col"><div class="fly-empty">영화 목록을 불러오는 중이에요…</div></div>`;
+      const now = all.filter(m => m.rel <= 0).sort((a, b) => b.rel - a.rel);
+      const soon = all.filter(m => m.rel > 0).sort((a, b) => a.rel - b.rel);
+      // 추천: 평균 별점이 높은 상영작 → 부족하면 최신 개봉작으로 채움
+      const rated = now.map(m => ({ m, a: avgOf(m.id) })).filter(x => x.a).sort((a, b) => b.a - a.a);
+      // 추천: 사용자가 고른 장르 취향을 반영 (없으면 평균 별점순)
+      // 후기: 가장 최근에 쓰인 리뷰
+      const recent = [];
+      reviewDocs.forEach(d => Object.entries(d.films || {}).forEach(([fid, r]) => { if (r && (r.title || r.text)) { const m = all.find(x => x.id === fid); if (m) recent.push({ m, r, uid: d.uid, likes: likeCount(d.uid, fid) }); } }));
+      recent.sort((a, b) => (b.r.at || 0) - (a.r.at || 0));
+      // 특전: 지금 증정 중인 영화 → 곧 시작하는 영화 → 지난 특전만 있는 영화 순서
+      const rank = { now: 0, soon: 1, past: 2 };
+      const perkMovies = all.map(m => {
+        const list = perksOf(m).map(p => perkInfo(m, p));
+        const cur = list.find(i => i.status === 'now') || list.find(i => i.status === 'soon') || list[0];
+        return { m, cur };
+      }).filter(x => x.cur).sort((a, b) => rank[a.cur.status] - rank[b.cur.status]);
+      return [
+        `<div class="fly-col fly-reco"><h4><a href="#movies-picks">추천</a></h4>
+          <a class="reco-cta" href="#movies-picks"><span class="reco-msg"><span class="fit" data-min="11">보고 싶은 영화가 없나요?</span><span class="fit" data-min="11">추천해 드리겠습니다!</span></span><span class="reco-go">취향 고르러 가기 →</span></a></div>`,
+        flyCol('개봉작', '#movies-now', now.slice(0, 6).map(m => flyItem(`#movie-${m.id}`, m.title, shortDate(m.relDate))), '상영중인 영화가 없어요.'),
+        flyCol('개봉예정작', '#movies-soon', soon.slice(0, 6).map(m => { const h = hypeCount(m.id); return flyItem(`#movie-${m.id}`, m.title, `D-${m.rel}${h ? ` · 🍿${h}` : ''}`); }), '개봉 예정인 영화가 없어요.'),
+        (() => {   // 후기: 공감 많은 후기 3개 + 최근 후기 3개
+          const rv = (x) => flyItem(`#reviews-${x.m.id}`, x.r.title || cut(x.r.text || '', 20), `${verdictOf(x.r) === 'good' ? '👍' : '👎'} ${esc(cut(x.m.title, 8))}${x.likes ? ` · ♥ ${x.likes}` : ''}`);
+          const top = recent.filter(x => x.likes > 0).sort((a, b) => b.likes - a.likes || (b.r.at || 0) - (a.r.at || 0)).slice(0, 3);
+          const topKeys = new Set(top.map(x => x.uid + x.m.id));
+          const latest = recent.filter(x => !topKeys.has(x.uid + x.m.id)).slice(0, 3);
+          return `<div class="fly-col"><h4><a href="#movies-reviews">후기</a></h4>
+            <div class="fly-sub">🔥 공감 많은 후기</div>${top.length ? `<ul>${top.map(rv).join('')}</ul>` : `<div class="fly-empty">아직 공감받은 후기가 없어요.</div>`}
+            <div class="fly-sub">🆕 최근 후기</div>${latest.length ? `<ul>${latest.map(rv).join('')}</ul>` : `<div class="fly-empty">${recent.length ? '새 후기를 기다리고 있어요.' : '아직 후기가 없어요.'}</div>`}</div>`;
+        })(),
+        flyCol('특전', '#movies-perks', perkMovies.slice(0, 7).map(({ m, cur }) => flyItem(`#movie-${m.id}`, m.title, cur.status === 'past' ? '지난 특전' : (cur.status === 'soon' ? '예정 · ' : '') + esc(cut(perkShort(cur.text), 12)))), '특전 정보가 없어요.')
+      ].join('');
+    }
+    const list = [...CONCERTS].sort((a, b) => a.d - b.d);
+    const count = (key) => { const o = {}; list.forEach(c => { o[c[key]] = (o[c[key]] || 0) + 1; }); return Object.entries(o); };
+    return [
+      `<div class="fly-col fly-big"><a href="#concerts">전체 공연</a></div>`,
+      flyCol('다가오는 공연', '', list.slice(0, 6).map(c => flyItem(`#concert-${c.id}`, c.title, `${shortDate(c.dateObj)} ${esc(c.city)}`)), '예정된 공연이 없어요.'),
+      flyCol('장르', '', count('genre').map(([g, n]) => flyItem('#concerts', g, n)), '정보가 없어요.'),
+      flyCol('지역', '', count('city').map(([g, n]) => flyItem('#concerts', g, n)), '정보가 없어요.')
+    ].join('');
+  }
+  /* ---------- 긴 제목 맞추기: 잘리거나 줄이 바뀌지 않게 한 줄에 들어갈 때까지 글자를 줄임 ---------- */
+  function fitText(root) {
+    (root || document).querySelectorAll('.fit').forEach(el => {
+      el.style.fontSize = ''; el.style.transform = '';
+      const avail = el.clientWidth;
+      if (!avail) return;                                    // 화면에 없는 요소는 건너뜀
+      const min = parseFloat(el.dataset.min || '9');
+      let size = parseFloat(getComputedStyle(el).fontSize);
+      let guard = 0;
+      while (el.scrollWidth > avail + 0.5 && size > min && guard++ < 80) { size = Math.max(min, size - 0.5); el.style.fontSize = size + 'px'; }
+      if (el.scrollWidth > avail + 0.5) {                    // 최소 크기로도 넘치면 글자 폭을 살짝 좁혀서 맞춤
+        el.style.transformOrigin = 'left center';
+        el.style.transform = `scaleX(${Math.max(0.55, avail / el.scrollWidth).toFixed(3)})`;
+      }
+    });
+  }
+  let fitQueued = false;
+  const queueFit = () => { if (fitQueued) return; fitQueued = true; setTimeout(() => { fitQueued = false; fitText(); }, 30); };
+  new MutationObserver(queueFit).observe(document.body, { childList: true, subtree: true });
+  window.addEventListener('resize', queueFit);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueFit);
+
+  /* ---------- 사진 크게 보기 (원본 해상도) ---------- */
+  const lightbox = document.createElement('div');
+  lightbox.className = 'lightbox'; lightbox.hidden = true;
+  lightbox.setAttribute('role', 'dialog'); lightbox.setAttribute('aria-label', '사진 크게 보기');
+  lightbox.innerHTML = '<img alt=""><button type="button" class="lb-close" aria-label="닫기">닫기 ✕</button>';
+  document.body.appendChild(lightbox);
+  let lbReturn = null;
+  document.addEventListener('click', (e) => {
+    const z = e.target.closest('[data-zoom]');
+    if (z) { lbReturn = z; const im = lightbox.querySelector('img'); im.src = z.dataset.zoom; im.alt = z.querySelector('img')?.alt || ''; lightbox.hidden = false; lightbox.querySelector('.lb-close').focus(); return; }
+    if (!lightbox.hidden && (e.target === lightbox || e.target.closest('.lb-close'))) { lightbox.hidden = true; lbReturn?.focus(); }
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !lightbox.hidden) { lightbox.hidden = true; lbReturn?.focus(); } });
+
+  const flyout = $('flyout'), scrim = $('scrim'), topBar = $('top');
+  let flyOpen = null, flyTimer = null;
+  const canHover = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  function openFly(kind) {
+    if (!flyout) return;
+    clearTimeout(flyTimer);
+    flyout.innerHTML = `<div class="flyout-inner ${kind}">${flyHTML(kind)}</div>`;
+    flyOpen = kind;
+    flyout.classList.add('open'); scrim.classList.add('open');
+    document.querySelectorAll('[data-menu]').forEach(a => { const on = a.dataset.menu === kind; a.classList.toggle('hot', on); a.setAttribute('aria-expanded', String(on)); });
+  }
+  function closeFly(now) {
+    if (!flyout) return;
+    clearTimeout(flyTimer);
+    const f = () => { flyOpen = null; flyout.classList.remove('open'); scrim.classList.remove('open'); document.querySelectorAll('[data-menu]').forEach(a => { a.classList.remove('hot'); a.setAttribute('aria-expanded', 'false'); }); };
+    if (now) f(); else flyTimer = setTimeout(f, 200);
+  }
+  if (flyout && scrim && topBar) {
+    document.querySelectorAll('[data-menu]').forEach(a => {
+      a.addEventListener('mouseenter', () => { if (!canHover) return; if (flyOpen !== a.dataset.menu) openFly(a.dataset.menu); else clearTimeout(flyTimer); });
+      a.addEventListener('click', (e) => {
+        if (!canHover) { e.preventDefault(); if (flyOpen === a.dataset.menu) closeFly(true); else openFly(a.dataset.menu); }   // 터치: 한 번 누르면 메뉴, 다시 누르면 닫힘
+        else closeFly(true);
+      });
+      a.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); openFly(a.dataset.menu); flyout.querySelector('a')?.focus(); } });
+    });
+    topBar.addEventListener('mouseleave', () => { if (canHover && flyOpen) closeFly(); });
+    topBar.addEventListener('mouseenter', () => clearTimeout(flyTimer));
+    scrim.addEventListener('click', () => closeFly(true));
+    flyout.addEventListener('click', (e) => { if (e.target.closest('a')) closeFly(true); });
+    topBar.addEventListener('focusout', (e) => { if (flyOpen && !topBar.contains(e.relatedTarget)) closeFly(true); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && flyOpen) { const k = flyOpen; closeFly(true); document.querySelector(`[data-menu="${k}"]`)?.focus(); } });
   }
 
   /* ---------- 라우팅 ---------- */
   let started = false;
   function currentRoute() {
     const h = location.hash.slice(1);
-    if (!started) return { view: 'home' };
-    if (h === 'movies' || h === 'concerts') return { view: h };
+    // 첫 화면: 영화와 콘서트를 한 페이지에 함께 보여 줌 (#movies / #concerts 는 해당 구역으로 이동)
+    // 첫 화면: 영화 / 콘서트 두 항목만. 누르면 목록(#movies / #concerts)으로 이동
+    if (!started || h === '' || h === 'home') return { view: 'home' };
+    if (LISTS[h]) return { view: 'list', kind: h };
     if (h === 'movie-new') return { view: 'editor', id: null };
     let m = h.match(/^edit-([A-Za-z0-9]+)$/); if (m) return { view: 'editor', id: m[1] };
     m = h.match(/^reviews-([A-Za-z0-9]+)$/); if (m) return { view: 'reviews', id: m[1] };
@@ -774,16 +965,234 @@
     m = h.match(/^concert-(c\d+)$/); if (m && CONCERTS.find(x => x.id === m[1])) return { view: 'concert', id: m[1] };
     return { view: 'home' };
   }
+  function pageHome() {
+    homeOpen = null;
+    return `<div class="home-wrap" id="home-wrap">
+      <div class="home2">
+        <a class="choice2" href="#movies" data-home="movies" aria-haspopup="true" aria-expanded="false"><span class="lbl">영화</span><span class="word">Movie</span></a>
+        <a class="choice2" href="#concerts" data-home="concerts" aria-haspopup="true" aria-expanded="false"><span class="lbl">콘서트</span><span class="word">Concert</span></a>
+      </div>
+      <div class="home-sub" id="home-sub"></div>
+    </div>`;
+  }
+  /* 첫 화면: 영화 / 콘서트에 마우스를 올리면 아래로 하위 항목이 펼쳐짐 (터치: 한 번 누르면 펼침, 두 번째에 이동) */
+  let homeOpen = null, homeTimer = null;
+  function openHome(kind) {
+    const sub = $('home-sub'); if (!sub) return;
+    clearTimeout(homeTimer);
+    if (homeOpen !== kind) {
+      const all = kind === 'movies' ? '영화 전체 보기' : '공연 전체 보기';
+      sub.innerHTML = `<div class="home-sub-head"><a href="#${kind}">${all} →</a></div><div class="flyout-inner ${kind}">${flyHTML(kind)}</div>`;
+      homeOpen = kind;
+    }
+    sub.classList.add('open');
+    $('home-wrap')?.classList.add('has-open');
+    document.querySelectorAll('.choice2').forEach(c => { const on = c.dataset.home === kind; c.classList.toggle('hot', on); c.setAttribute('aria-expanded', String(on)); });
+  }
+  function closeHome(now) {
+    clearTimeout(homeTimer);
+    const f = () => {
+      homeOpen = null;
+      $('home-sub')?.classList.remove('open');
+      $('home-wrap')?.classList.remove('has-open');
+      document.querySelectorAll('.choice2').forEach(c => { c.classList.remove('hot'); c.setAttribute('aria-expanded', 'false'); });
+    };
+    if (now) f(); else homeTimer = setTimeout(f, 250);
+  }
+  const homeHover = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  document.addEventListener('mouseover', (e) => {
+    if (!homeHover || !$('home-wrap')) return;
+    const c = e.target.closest('.choice2');
+    if (c) { openHome(c.dataset.home); return; }
+    if (e.target.closest('#home-wrap')) { clearTimeout(homeTimer); return; }
+    if (homeOpen) closeHome();
+  });
+  document.addEventListener('click', (e) => {
+    const c = e.target.closest('.choice2');
+    if (c && !homeHover && homeOpen !== c.dataset.home) { e.preventDefault(); openHome(c.dataset.home); }
+  });
+  document.addEventListener('focusin', (e) => { const c = e.target.closest('.choice2'); if (c) openHome(c.dataset.home); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && homeOpen) closeHome(true); });
+  /* ---------- 예매 현황 (예매율 · 성별 · 연령대) ---------- */
+  const AGE_EMOJI = { '10대': '🧒', '20대': '🧑', '30대': '🧑‍💼', '40대': '🧔', '40대 이상': '🧔', '50대': '🧓', '50대 이상': '🧓', '기타': '❔' };
+  function statsHTML(m) {
+    const s = m.stats; if (!s) return '';
+    const num = (v) => Math.max(0, Math.min(100, +v || 0));
+    const src = (o) => o && (o.basis || o.link) ? `<div class="st-src">${esc(o.basis || '')}${o.link && /^https?:\/\//.test(o.link) ? ` <a class="perk-link" href="${esc(o.link)}" target="_blank" rel="noopener">출처 ↗</a>` : ''}</div>` : '';
+    let html = '';
+    if (s.rate) html += `<div class="st-card"><div class="st-head">🎟️ 예매율</div>
+      <div class="st-big">${num(s.rate.pct)}%${s.rate.rank ? `<small>🏆 전체 ${+s.rate.rank}위</small>` : ''}</div>
+      ${s.rate.audience ? `<div class="muted">예매 관객 ${(+s.rate.audience).toLocaleString()}명</div>` : ''}${src(s.rate)}</div>`;
+    if (s.gender) {
+      const f = num(s.gender.f), mm = num(s.gender.m);
+      html += `<div class="st-card"><div class="st-head">성별</div>
+        <div class="st-gender"><span>🙋‍♀️ 여성 <b>${f}%</b></span><span>🙋‍♂️ 남성 <b>${mm}%</b></span></div>
+        <div class="st-split" role="img" aria-label="여성 ${f}퍼센트, 남성 ${mm}퍼센트"><i class="f" style="width:${f}%"></i><i class="m" style="width:${mm}%"></i></div>${src(s.gender)}</div>`;
+    }
+    if (s.ages && Array.isArray(s.ages.list) && s.ages.list.length) {
+      const list = s.ages.list.map(([l, p]) => [String(l), num(p)]);
+      const max = Math.max(...list.filter(([l]) => l !== '기타').map(a => a[1]));
+      html += `<div class="st-card st-wide"><div class="st-head">연령대</div><ul class="st-ages">${list.map(([l, p]) => {
+        const top = l !== '기타' && p === max;
+        return `<li class="${top ? 'top' : ''}${l === '기타' ? ' etc' : ''}"><span class="st-age">${AGE_EMOJI[l] || '🙂'} ${esc(l === '기타' ? '그 밖의 연령' : l)}</span>
+          <span class="st-bar"><i style="width:${p}%"></i></span><b>${p}%</b><span class="st-crown">${top ? '👑' : ''}</span></li>`;
+      }).join('')}</ul>${src(s.ages)}</div>`;
+    }
+    if (!html) return '';
+    return `<div class="stats-wrap">${html}</div>
+      <div class="st-note">🎟️ 예매율은 영화관입장권통합전산망(KOBIS) 기준으로 CGV·롯데시네마·메가박스 등 전국 극장을 합산한 값이에요. 성별·연령 분포는 공개된 CGV 예매 통계 기준이에요. 숫자는 집계 시점마다 달라질 수 있어요.</div>`;
+  }
+
+  /* 후기 화면 정렬: 최신순 / 공감순 */
+  let revSort = 'new';
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-rsort]');
+    if (b) { revSort = b.dataset.rsort; const y = window.scrollY; render(); window.scrollTo(0, y); }
+  });
+
+  /* ---------- 영화 추천: 좋아하는 장르(여러 개) 고르기 + 싫은 장르 빼기 ---------- */
+  const GENRE_SAME = { '모험': '어드벤처', '생존': '서바이벌', '추리': '미스터리', '공연 실황': '공연', '음악': '공연' };   // 같은 뜻의 장르는 하나로
+  const genresOf = (m) => [...new Set(String(m.genre || '').split(/[,·/]+/).map(s => s.trim()).filter(Boolean).map(g => GENRE_SAME[g] || g))];
+  const PICK_KEY = 'smo.pick.v1';
+  const pick = (() => {
+    let s = {};
+    try { s = JSON.parse(localStorage.getItem(PICK_KEY)) || {}; } catch {}
+    return { like: new Set(s.like || []), dislike: new Set(s.dislike || []), soon: !!s.soon };
+  })();
+  const savePick = () => { try { localStorage.setItem(PICK_KEY, JSON.stringify({ like: [...pick.like], dislike: [...pick.dislike], soon: pick.soon })); } catch {} };
+  function allGenres(all) {
+    const count = {};
+    all.forEach(m => genresOf(m).forEach(g => { count[g] = (count[g] || 0) + 1; }));
+    return Object.entries(count).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ko')).map(([g]) => g);
+  }
+  // 점수: 고른 장르와 겹칠수록 ↑, 평균 별점 ↑, (예정작은) 기대돼요 ↑ / 뺀 장르가 하나라도 있으면 제외
+  function recommend(all) {
+    const pool = all.filter(m => m.rel <= 0 || pick.soon);
+    const out = [];
+    pool.forEach(m => {
+      const gs = genresOf(m);
+      if (gs.some(g => pick.dislike.has(g))) return;
+      const hit = gs.filter(g => pick.like.has(g));
+      if (pick.like.size && !hit.length) return;
+      const avg = avgOf(m.id) || 0;
+      const hype = m.rel > 0 ? hypeCount(m.id) : 0;
+      const score = hit.length * 100 + avg * 10 + hype * 3 + (m.rel <= 0 ? Math.max(0, 30 + m.rel) / 10 : 0);
+      const why = [];
+      if (hit.length) why.push(`${hit.join('·')} 취향 일치`);
+      if (avg) why.push(`★ ${avg.toFixed(1)}`);
+      if (m.rel > 0) why.push(`D-${m.rel}${hype ? ` · 🍿${hype}` : ''}`);
+      else if (!avg) why.push(m.rel >= -7 ? '최근 개봉' : '상영 중');
+      out.push({ m, score, why: why.join(' · '), short: avg ? `★ ${avg.toFixed(1)}` : (hit.length ? hit[0] : (m.rel > 0 ? `D-${m.rel}` : '신작')) });
+    });
+    return out.sort((a, b) => b.score - a.score);
+  }
+  function genrePicker(all) {
+    const gs = allGenres(all);
+    const chip = (g, kind) => {
+      const on = (kind === 'like' ? pick.like : pick.dislike).has(g);
+      const other = (kind === 'like' ? pick.dislike : pick.like).has(g);
+      return `<button type="button" class="pk-chip ${kind} ${on ? 'on' : ''} ${other ? 'other' : ''}" data-pk="${kind}" data-genre="${esc(g)}" aria-pressed="${on}">${kind === 'dislike' && on ? '✕ ' : ''}${esc(g)}</button>`;
+    };
+    return `<div class="picker">
+      <div class="pk-row"><div class="pk-label">👍 보고 싶은 장르 <small>여러 개 고를 수 있어요</small></div><div class="pk-chips">${gs.map(g => chip(g, 'like')).join('')}</div></div>
+      <div class="pk-row"><div class="pk-label">🙅 빼고 싶은 장르 <small>이 장르가 들어간 영화는 빠져요</small></div><div class="pk-chips">${gs.map(g => chip(g, 'dislike')).join('')}</div></div>
+      <div class="pk-row pk-opts">
+        <label class="pk-check"><input type="checkbox" id="pk-soon" ${pick.soon ? 'checked' : ''}> 개봉 예정작도 포함</label>
+        ${pick.like.size || pick.dislike.size ? `<button type="button" class="link muted" data-pk-reset>선택 초기화</button>` : ''}
+      </div>
+    </div>`;
+  }
+  const recWork = ({ m, why }) => `<a class="work" href="#movie-${m.id}">${frame(m, 'poster', 1)}<div class="work-head"><span class="t fit" data-min="9">${esc(m.title)}</span><span class="pk-why">${esc(why)}</span></div></a>`;
+  document.addEventListener('click', (e) => {
+    const c = e.target.closest('[data-pk]');
+    if (c) {
+      const g = c.dataset.genre, kind = c.dataset.pk;
+      const set = kind === 'like' ? pick.like : pick.dislike, other = kind === 'like' ? pick.dislike : pick.like;
+      if (set.has(g)) set.delete(g); else { set.add(g); other.delete(g); }   // 같은 장르를 '좋아요'와 '빼기'에 동시에 넣지 않음
+      savePick(); const y = window.scrollY; render(); window.scrollTo(0, y);
+      return;
+    }
+    if (e.target.closest('[data-pk-reset]')) { pick.like.clear(); pick.dislike.clear(); savePick(); const y = window.scrollY; render(); window.scrollTo(0, y); }
+  });
+  document.addEventListener('change', (e) => {
+    if (e.target.id === 'pk-soon') { pick.soon = e.target.checked; savePick(); const y = window.scrollY; render(); window.scrollTo(0, y); }
+  });
+
+  /* ---------- 두 번째 화면: 고른 항목만 보여 주는 목록 ---------- */
+  const LISTS = { movies: 1, 'movies-picks': 1, 'movies-now': 1, 'movies-soon': 1, 'movies-reviews': 1, 'movies-perks': 1, concerts: 1 };
+  function subNav(kind) {
+    const tabs = [['movies', '전체'], ['movies-picks', '추천'], ['movies-now', '개봉작'], ['movies-soon', '개봉예정작'], ['movies-reviews', '후기'], ['movies-perks', '특전']];
+    return `<nav class="subnav" aria-label="영화 목록 종류">${tabs.map(([k, l]) => `<a href="#${k}"${k === kind ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
+  }
+  const listIntro = (title, desc, count) => `<div class="intro"><h1>${title}${count != null ? ` (${count})` : ''}</h1><div><p>${desc}</p></div></div>`;
+  const posterGrid = (list, empty) => list.length ? `<div class="works">${list.map(movieWork).join('')}</div>` : `<div class="note">${empty}</div>`;
+  function pageList(kind) {
+    if (kind === 'concerts') return pageConcerts();
+    if (kind === 'movies') return pageMovies();
+    if (movieState === 'loading') return listIntro('영화', '영화 목록을 불러오는 중이에요…');
+    const all = allMovies();
+    const now = all.filter(m => m.rel <= 0).sort((a, b) => b.rel - a.rel);
+    const soon = all.filter(m => m.rel > 0).sort((a, b) => a.rel - b.rel);
+    if (kind === 'movies-now')
+      return listIntro('개봉작', '지금 극장에서 상영 중인 영화예요. 포스터를 누르면 시놉시스, 예고편, 정보, 리뷰를 볼 수 있어요.', now.length) + subNav(kind) + `<div class="list-gap"></div>` + posterGrid(now, '상영 중인 영화가 없어요.');
+    if (kind === 'movies-soon')
+      return listIntro('개봉예정작', '곧 개봉하는 영화예요. 🍿 기대돼요를 눌러 기대지수를 올려 보세요.', soon.length) + subNav(kind) + `<div class="list-gap"></div>` + posterGrid(soon, '개봉 예정인 영화가 없어요.');
+    if (kind === 'movies-picks') {
+      const recs = recommend(all);
+      const liked = [...pick.like], disliked = [...pick.dislike];
+      const summary = liked.length || disliked.length
+        ? `${liked.length ? `👍 ${liked.map(esc).join(' · ')}` : ''}${liked.length && disliked.length ? '&nbsp;&nbsp;' : ''}${disliked.length ? `🙅 ${disliked.map(esc).join(' · ')} 제외` : ''}`
+        : '장르를 고르지 않아서 평균 별점이 높은 순서로 보여 줘요.';
+      const empty = liked.length ? '고른 장르에 맞는 영화가 없어요. 장르를 더 고르거나 ‘개봉 예정작도 포함’을 켜 보세요.' : '추천할 영화가 없어요. 빼고 싶은 장르를 줄여 보세요.';
+      return listIntro('추천', '좋아하는 장르나 지금 보고 싶은 장르를 여러 개 고르고, 싫은 장르는 빼 보세요. 취향에 맞는 영화를 골라 드려요.', null) + subNav(kind) + `<div class="list-gap"></div>` +
+        genrePicker(all) +
+        `<div class="pk-result"><span>추천 결과 <b>${recs.length}</b>편</span><span class="muted">${summary}</span></div>` +
+        (recs.length ? `<div class="works">${recs.map(x => recWork(x)).join('')}</div>` : `<div class="note">${empty}</div>`);
+    }
+    if (kind === 'movies-reviews') {
+      const recent = [];
+      reviewDocs.forEach(d => Object.entries(d.films || {}).forEach(([fid, r]) => { if (r && (r.title || r.text)) { const m = all.find(x => x.id === fid); if (m) recent.push({ m, r, uid: d.uid }); } }));
+      recent.forEach(x => { x.likes = likeCount(x.uid, x.m.id); });
+      if (revSort === 'likes') recent.sort((a, b) => b.likes - a.likes || (b.r.at || 0) - (a.r.at || 0));
+      else recent.sort((a, b) => (b.r.at || 0) - (a.r.at || 0));
+      const cards = recent.slice(0, 40).map(({ m, r, uid, likes }) => `<a class="rv-card" href="#reviews-${m.id}">
+          <div class="rv-card-poster">${frame(m, 'poster', 1)}</div>
+          <div class="rv-card-body"><span class="muted">${esc(m.title)}</span>
+            <b>${vtag(r)} ${esc(r.title || cut(r.text || '', 30))}</b>
+            ${r.text ? `<p>${esc(r.text)}</p>` : ''}
+            <span class="muted">${starsRead(r.rating)} · <span data-name="${esc(uid)}">관람객</span> · ${r.at ? fmtDate(new Date(r.at)) : ''}${likes ? ` · <span class="rv-like">♥ 공감 ${likes}</span>` : ''}</span></div></a>`).join('');
+      const sortTabs = `<div class="seg rv-sort" role="group" aria-label="후기 정렬">${[['new', '🆕 최신순'], ['likes', '🔥 공감순']].map(([k, l]) => `<button type="button" data-rsort="${k}" aria-pressed="${revSort === k}">${l}</button>`).join('')}</div>`;
+      return listIntro('후기', '관람객들이 남긴 리뷰예요. 최신순이나 공감을 많이 받은 순서로 볼 수 있고, 누르면 그 영화의 리뷰 페이지로 이동해요.', recent.length) + subNav(kind) + `<div class="list-gap"></div>` + (recent.length ? sortTabs : '') +
+        (storeState === 'loading' ? `<div class="note">후기를 불러오는 중이에요…</div>` : cards ? `<div class="rv-cards">${cards}</div>` : `<div class="note">아직 후기가 없어요. 영화를 보고 첫 리뷰를 남겨 보세요.</div>`);
+    }
+    if (kind === 'movies-perks') {
+      const rank = { now: 0, soon: 1, past: 2 };
+      const items = all.map(m => { const list = perksOf(m).map(p => perkInfo(m, p)); const best = list.reduce((b, x) => Math.min(b, rank[x.status]), 3); return { m, best }; })
+        .filter(x => x.best < 3).sort((a, b) => a.best - b.best);
+      const rows = items.map(({ m }) => `<div class="perk-movie"><a class="pm-poster" href="#movie-${m.id}">${frame(m, 'poster', 1)}</a>
+          <div class="pm-body"><a href="#movie-${m.id}"><h3>${esc(m.title)}</h3></a>${perkRowHTML(m)}</div></div>`).join('');
+      return listIntro('특전', '극장 특전을 영화별로 모았어요. 지금 증정 중인 특전이 위에, 끝난 특전은 아래에 흐리게 보여요. 대부분 선착순이라 일찍 끝날 수 있어요.', items.length) + subNav(kind) + `<div class="list-gap"></div>` +
+        (rows || `<div class="note">특전 정보가 없어요.</div>`);
+    }
+    return pageMovies();
+  }
+  function pageAll() {
+    return `<section id="sec-movies">${pageMovies()}</section><section id="sec-concerts" class="sec-concerts">${pageConcerts()}</section>`;
+  }
   // fromData: 데이터가 바뀌어 다시 그릴 때(입력 중인 폼은 건드리지 않음)
   function render(fromData) {
     const r = currentRoute();
-    $('view-home').hidden = r.view !== 'home';
-    $('inner').hidden = r.view === 'home';
-    const tab = r.view === 'concerts' || r.view === 'concert' ? 'concerts' : 'movies';
+    $('view-home').hidden = true;
+    $('inner').hidden = false;
+    document.body.classList.toggle('is-home', r.view === 'home');
+    const tab = r.view === 'concert' || r.kind === 'concerts' ? 'concerts' : r.view === 'home' ? '' : 'movies';
     document.querySelectorAll('header.top nav a').forEach(a => { if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     const page = $('page');
-    if (r.view === 'movies') page.innerHTML = pageMovies();
-    else if (r.view === 'concerts') page.innerHTML = pageConcerts();
+    if (r.view === 'home') page.innerHTML = pageHome();
+    else if (r.view === 'list') {
+      page.innerHTML = pageList(r.kind);
+      fillNames([...new Set([...page.querySelectorAll('[data-name]')].map(e => e.dataset.name))]);
+    }
     else if (r.view === 'concert') page.innerHTML = pageConcert(CONCERTS.find(x => x.id === r.id));
     else if (r.view === 'movie' || r.view === 'reviews') {
       if (fromData && r.view === 'reviews' && document.activeElement?.id === 'rv-text') return;
@@ -804,9 +1213,14 @@
       page.innerHTML = pageEditor(m);
     }
   }
-  window.addEventListener('hashchange', () => { started = true; confirmDelMovie = null; render(); window.scrollTo(0, 0); });
+  window.addEventListener('hashchange', () => {
+    started = true; confirmDelMovie = null; closeFly(true); render();
+    const r = currentRoute();
+    const sec = r.view === 'all' && r.focus ? $(FOCUS[r.focus]) : null;
+    if (sec) sec.scrollIntoView(); else window.scrollTo(0, 0);
+  });
 
-  // 접속하면 항상 시작 화면(영화 / 콘서트 두 항목)부터 보여 줌
+  // 접속하면 항상 첫 화면(영화 + 콘서트)의 맨 위부터 보여 줌
   if (location.hash) { try { history.replaceState(null, '', location.pathname + location.search); } catch {} }
   render();
   initStore();
