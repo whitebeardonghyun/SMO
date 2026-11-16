@@ -33,26 +33,22 @@
       cast: [['강태준', '관제 요원 도경'], ['신예린', '해커 제로']] }
   ].map(m => ({ ...m, example: true, date: ymd(addDays(today, m.rel)), cast: m.cast.map(([name, role]) => ({ name, role })), trailer: '' }));
 
-  /* ---------- 콘서트 (예시 데이터) ---------- */
-  const CONCERTS = [
-    { id: 'c1', title: 'LUMINA 1st 팬콘서트', en: 'LUMINA', d: 4, tm: '18:00', genre: 'K-POP', venue: 'KSPO DOME', city: '서울', price: '154,000원', c: ['#6A00F4', '#F72585'], lineup: ['LUMINA'], desc: '데뷔 1주년을 맞은 5인조 그룹 LUMINA의 첫 팬콘서트. 데뷔곡부터 미공개 신곡까지 약 150분 동안 이어집니다.' },
-    { id: 'c2', title: '윤서하 전국투어 〈편지〉', en: 'LETTERS TOUR', d: 6, tm: '17:00', genre: '발라드', venue: '벡스코 오디토리움', city: '부산', price: '121,000–143,000원', c: ['#22223B', '#C9ADA7'], lineup: ['윤서하'], desc: '데뷔 10년 차 보컬리스트 윤서하가 팬들에게 받은 편지를 주제로 꾸민 전국투어.' },
-    { id: 'c3', title: '새벽빛 밴드 〈네온〉', en: 'NEON', d: 9, tm: '20:00', genre: '인디, 밴드', venue: '롤링홀', city: '서울', price: '66,000원', c: ['#03045E', '#00B4D8'], lineup: ['새벽빛 밴드'], desc: '스탠딩 공연으로 진행되는 새벽빛 밴드의 정규 2집 발매 기념 단독 공연.' },
-    { id: 'c4', title: 'CITY BEATS 2026', en: 'CITY BEATS', d: 13, tm: '15:00', genre: '힙합 페스티벌', venue: '킨텍스 제2전시장', city: '고양', price: '99,000원', c: ['#111111', '#FFBE0B'], lineup: ['MC 레오', 'JUNO', '크루 808', 'DJ 하울'], desc: '국내 힙합 아티스트 20팀이 출연하는 실내 힙합 페스티벌.' },
-    { id: 'c5', title: '겨울 협주곡의 밤', en: 'WINTER CONCERTO', d: 17, tm: '19:30', genre: '클래식', venue: '예술의전당 콘서트홀', city: '서울', price: '30,000–120,000원', c: ['#0D1B2A', '#778DA9'], lineup: ['서울 챔버 오케스트라', '피아니스트 이서윤'], desc: '비발디 〈사계〉 중 겨울과 라흐마니노프 피아노 협주곡 2번을 연주하는 연말 클래식 공연.' },
-    { id: 'c6', title: 'STARLINE 〈ORBIT〉', en: 'ORBIT', d: 24, tm: '18:00', genre: 'K-POP', venue: '인스파이어 아레나', city: '인천', price: '165,000원', c: ['#10002B', '#9D4EDD'], lineup: ['STARLINE'], desc: '우주를 콘셉트로 한 대형 무대 연출로 꾸민 STARLINE의 두 번째 단독 콘서트.' }
-  ];
-  // 실제 공연 (공연 실황 영화 포함). date 가 있으면 그 날짜를 써요.
-  CONCERTS.push({
-    id: 'c7', real: true, title: '임영웅 | 아임 히어로 더 스타디움 2', en: 'IM HERO THE STADIUM 2', date: '2026-11-18', tm: '', genre: '공연 실황 영화',
-    venue: 'CGV 단독 (2D · SCREENX)', city: '전국', price: 'CGV 관람료', c: ['#0B3D91', '#5BC0EB'], lineup: ['임영웅'],
-    desc: '가수 임영웅의 2026 스타디움 콘서트 실황을 극장에서 다시 만나는 공연 영화. 무대 위 공연과 팬 \'영웅시대\'와 함께한 순간들을 큰 화면과 사운드로 담았어요. 러닝타임 144분, 전체 관람가. 전국 CGV 단독 개봉이며, 11/16 기준 예매율 26.1%로 전체 1위예요.',
-    trailer: 'https://www.youtube.com/watch?v=U6cGSBne2Gs'
-  });
-  CONCERTS.forEach(c => {
-    c.dateObj = c.date ? parseYmd(c.date) : addDays(today, c.d);
-    c.d = Math.round((c.dateObj - today) / 86400000);
-  });
+  /* ---------- 콘서트 (data.js 의 SMO_CONCERTS) ---------- */
+  const CONCERT_BASE = window.SMO_CONCERTS || [];
+  let concertDocs = [], concertState = 'off', CONCERTS = [];
+  const toLines = (v) => Array.isArray(v) ? v : (v ? String(v).split('\n') : []);
+  function decorateConcert(c) {
+    const dateObj = parseYmd(c.date) || today;
+    const endObj = c.end ? parseYmd(c.end) : null;
+    const d = Math.round((dateObj - today) / 86400000);
+    const dEnd = endObj ? Math.round((endObj - today) / 86400000) : d;
+    return { ...c, c: c.c || palette(c.id), dateObj, endObj, d, dEnd, tm: c.tm || '',
+      lineup: toLines(c.lineup).map(x => typeof x === 'string' ? { name: x, role: '' } : x).filter(x => x && x.name),
+      setlist: toLines(c.setlist).map(s => String(s).trim()).filter(Boolean),
+      seats: toLines(c.seats).map(x => typeof x === 'string' ? { g: x, p: '' } : x).filter(x => x && x.g) };
+  }
+  function refreshConcerts() { CONCERTS = (concertState === 'ready' && concertDocs.length ? concertDocs : CONCERT_BASE).map(decorateConcert); }
+  refreshConcerts();
 
   /* ---------- 상태 ---------- */
   let db = null, user = null, assets = null, myId = null, isOwner = false, isAdmin = false;
@@ -297,28 +293,297 @@
   }
 
   /* ---------- 페이지: 콘서트 ---------- */
-  function pageConcerts() {
-    const list = [...CONCERTS].sort((a, b) => a.d - b.d);
-    return `<div class="intro"><h1>콘서트 (${list.length})</h1><p>다가오는 공연이에요. 포스터를 누르면 공연 정보를 볼 수 있어요. 임영웅 공연 실황 영화를 뺀 나머지 공연은 예시예요.</p></div>
-      <div class="group-label"><span>다가오는 공연</span><span>${list.length}</span></div>
+  function pageConcerts(region) {
+    const all = [...CONCERTS].sort((a, b) => a.d - b.d);
+    const list = region ? all.filter(c => regionOf(c) === region) : all;
+    const adminBar = isAdmin ? `<div class="admin-bar"><a class="link" href="#concert-new">+ 공연 등록</a></div>` : '';
+    const rn = region ? regionName(region) : '';
+    return `<div class="intro"><h1>${rn ? `${esc(rn)} 공연` : '콘서트'} (${list.length})</h1><div><p>${rn ? `${esc(rn)}에서 열리는 공연이에요.` : '전국에서 열리는 공연이에요.'} 포스터를 누르면 출연진, 셋리스트, 좌석 배치도와 가격을 볼 수 있어요.</p>${adminBar}</div></div>
+      ${concertNav('concerts')}
+      ${regionChips(all, region || '')}
+      <div class="group-label"><span>${rn ? esc(rn) + ' · ' : ''}다가오는 공연</span><span>${list.length}</span></div>
+      ${list.length ? '' : `<div class="note">${esc(rn)}에서 열리는 공연이 아직 없어요. 다른 지역을 골라 보세요.</div>`}
       <div class="works">${list.map(c => `<a class="work" href="#concert-${c.id}">${frame(c, 'poster', 1)}<div class="work-head"><span class="t fit" data-min="9">${esc(c.title)}</span><span class="muted">${c.dateObj.getMonth() + 1}.${c.dateObj.getDate()} ${esc(c.city)}</span></div></a>`).join('')}</div>`;
   }
+  const seatmapSrc = (c) => c.seatmapId ? '/_blob/' + c.seatmapId : (c.seatmap || '');
+  const concertDday = (c) => c.d > 0 ? `D-${c.d}` : c.dEnd >= 0 ? '공연 중' : '지난 공연';
   function pageConcert(c) {
+    const fromDb = concertState === 'ready' && concertDocs.some(x => x.id === c.id);
+    const admin = isAdmin ? `<div class="admin-bar"><a class="link" href="#concert-edit-${c.id}">수정</a>
+      ${fromDb ? (confirmDelMovie === c.id ? `<span class="muted">이 공연을 삭제할까요?</span><button class="link danger" data-concert-act="del-yes">삭제</button><button class="link" data-concert-act="del-no">취소</button>`
+        : `<button class="link danger" data-concert-act="del">삭제</button>`) : ''}</div>` : '';
+    const when = c.when || `${fmtKo(c.dateObj)}${c.tm ? ' ' + esc(c.tm) : ''}`;
+    const sm = seatmapSrc(c);
+    const pre = c.d > 0;
+    const setNote = c.setNote || (pre ? '공연 전이라 대표곡과 지난 공연을 바탕으로 꾸린 예상 셋리스트예요. 실제 곡과 순서는 다를 수 있어요.' : '');
     return `<div class="detail-top">
-        <div><h1 class="fit" data-min="18">${esc(c.title)}</h1><div class="sub">${esc(c.en)}${c.real ? '' : ' · 예시'}</div></div>
-        <div class="rows">
-          <div class="r"><span>일시</span><span>${fmtKo(c.dateObj)} ${c.tm}${c.d > 0 ? ` · D-${c.d}` : c.d === 0 ? ' · 오늘' : ' · 상영 중'}</span></div>
-          <div class="r"><span>장소</span><span>${esc(c.venue)}, ${esc(c.city)}</span></div>
-          <div class="r"><span>장르</span><span>${esc(c.genre)}</span></div>
-          <div class="r"><span>가격</span><span>${esc(c.price)}</span></div>
-          <div class="r"><span>출연</span><span class="list">${c.lineup.map(n => `<span>${esc(n)}</span>`).join('')}</span></div>
-          <div class="r"><span>소개</span><p>${esc(c.desc)}</p></div>
-          ${ytId(c.trailer || '') ? `<div class="r"><span>예고편</span><span class="links"><a class="link" href="${ytUrl(ytId(c.trailer))}" target="_blank" rel="noopener">YouTube에서 보기 ↗</a></span></div>` : ''}
-        </div>
+        <div><h1 class="fit" data-min="18">${esc(c.title)}</h1><div class="sub">${c.en ? esc(c.en) + ' · ' : ''}${concertDday(c)}</div>${admin}</div>
+        <div class="detail-poster">${frame(c, 'poster', 1)}</div>
       </div>
-      <div class="big-frames">${frame(c, 'poster', 1)}<div class="stack">${frame(c, 'still', 2)}${frame(c, 'still', 3)}</div></div>
+
+      <div class="group-label"><span>정보</span><span>01</span></div>
+      <div class="rows">
+        <div class="r"><span>일시</span><span>${esc(when)}</span></div>
+        <div class="r"><span>장소</span><span>${esc(c.venue)}${c.city ? ', ' + esc(c.city) : ''}</span></div>
+        ${c.genre ? `<div class="r"><span>장르</span><span>${esc(c.genre)}</span></div>` : ''}
+        ${c.price ? `<div class="r"><span>가격</span><span>${esc(c.price)}</span></div>` : ''}
+        ${c.desc ? `<div class="r"><span>소개</span><p>${esc(c.desc)}</p></div>` : ''}
+        ${c.book || ytId(c.trailer || '') ? `<div class="r"><span>바로가기</span><span class="links">
+          ${c.book ? `<a class="link" href="${esc(c.book)}" target="_blank" rel="noopener">${esc(c.bookName || '예매처')} ↗</a>` : ''}
+          ${ytId(c.trailer || '') ? `<a class="link" href="${ytUrl(ytId(c.trailer))}" target="_blank" rel="noopener">예고편 YouTube ↗</a>` : ''}
+          ${c.src ? `<a class="link muted" href="${esc(c.src)}" target="_blank" rel="noopener">정보 출처 ↗</a>` : ''}</span></div>` : ''}
+      </div>
+
+      <div class="group-label"><span>출연진</span><span>02</span></div>
+      ${c.lineup.length ? `<div class="lineup">${c.lineup.map((p, i) => `<div class="lu"><span class="lu-n">${String(i + 1).padStart(2, '0')}</span><b>${esc(p.name)}</b>${p.role ? `<span class="muted">${esc(p.role)}</span>` : ''}</div>`).join('')}</div>` : `<div class="muted">등록된 출연진이 없어요.</div>`}
+
+      <div class="group-label"><span>셋리스트</span><span>03</span></div>
+      ${c.setlist.length ? `${setNote ? `<div class="note set-note">${pre ? '🎵 ' : ''}${esc(setNote)}</div>` : ''}<ol class="setlist">${c.setlist.map(s => `<li><span>${esc(s)}</span></li>`).join('')}</ol>` : `<div class="muted">아직 셋리스트가 없어요.</div>`}
+
+      <div class="group-label"><span>좌석 배치도 · 좌석표</span><span>04</span></div>
+      <div class="seat-wrap">
+        <div class="seat-map">${sm ? `<button type="button" class="seat-img" data-zoom="${esc(sm)}" aria-label="좌석 배치도 크게 보기"><img src="${esc(sm)}" alt="${esc(c.venue)} 좌석 배치도" loading="lazy"><span>누르면 크게 보여요 ⤢</span></button>`
+          : `<div class="seat-empty"><b>🏟️</b><span>${c.seatNote ? esc(c.seatNote) : `아직 배치도 이미지가 없어요.${isAdmin ? ' 수정에서 예매처의 좌석 배치도 이미지를 올려 주세요.' : ' 예매처 공연 페이지에서 확인할 수 있어요.'}`}</span></div>`}</div>
+        <div class="seat-table">${c.seats.length ? `<table><thead><tr><th>좌석 등급</th><th>가격</th></tr></thead><tbody>${c.seats.map(s => `<tr><td>${esc(s.g)}${s.note ? `<span class="muted">${esc(s.note)}</span>` : ''}</td><td>${esc(s.p || '-')}</td></tr>`).join('')}</tbody></table>`
+          : c.seatNote ? `<div class="note">${esc(c.price || '관람료')}는 ${c.book ? `<a class="link" href="${esc(c.book)}" target="_blank" rel="noopener">${esc(c.bookName || '예매처')} ↗</a>` : '예매처'}에서 확인해 주세요.</div>`
+          : `<div class="note">등급별 가격은 아직 확인하지 못했어요. ${c.book ? `<a class="link" href="${esc(c.book)}" target="_blank" rel="noopener">${esc(c.bookName || '예매처')} ↗</a> 공지를 확인해 주세요.` : '예매처 공지를 확인해 주세요.'}</div>`}
+          <div class="hint">가격은 예매 수수료를 뺀 금액이에요. 예매처 사정에 따라 바뀔 수 있어요.</div></div>
+      </div>
+      ${venueOf(c) ? `<a class="rv-cta venue-cta" href="#venue-${venueOf(c).id}"><span>🏟️ ${esc(venueOf(c).name)} 좌석 후기 보기 · 시야 · 음향 <b id="venue-link-n">${seatReviews(venueOf(c).id).length || ''}</b></span><span>→</span></a>` : ''}
       <div class="section-gap"><a class="link muted" href="#concerts">← 공연 목록</a></div>`;
   }
+
+  /*VENUES-START*/
+  /* ---------- 지역 ---------- */
+  const REGIONS = [['seoul', '서울'], ['gyeonggi', '경기'], ['incheon', '인천'], ['gangwon', '강원'], ['daejeon', '대전'], ['sejong', '세종'], ['chungbuk', '충북'], ['chungnam', '충남'], ['gwangju', '광주'], ['jeonbuk', '전북'], ['jeonnam', '전남'], ['daegu', '대구'], ['gyeongbuk', '경북'], ['busan', '부산'], ['ulsan', '울산'], ['gyeongnam', '경남'], ['jeju', '제주']];
+  const CITY_REGION = { '경기도': 'gyeonggi', '고양': 'gyeonggi', '일산': 'gyeonggi', '수원': 'gyeonggi', '성남': 'gyeonggi', '용인': 'gyeonggi', '부천': 'gyeonggi', '안산': 'gyeonggi', '파주': 'gyeonggi', '하남': 'gyeonggi', '송도': 'incheon', '영종': 'incheon',
+    '강원특별': 'gangwon', '춘천': 'gangwon', '원주': 'gangwon', '강릉': 'gangwon', '충청북': 'chungbuk', '청주': 'chungbuk', '충주': 'chungbuk', '충청남': 'chungnam', '천안': 'chungnam', '아산': 'chungnam',
+    '전북특별': 'jeonbuk', '전라북': 'jeonbuk', '전주': 'jeonbuk', '익산': 'jeonbuk', '군산': 'jeonbuk', '전라남': 'jeonnam', '여수': 'jeonnam', '순천': 'jeonnam', '목포': 'jeonnam',
+    '경상북': 'gyeongbuk', '포항': 'gyeongbuk', '경주': 'gyeongbuk', '구미': 'gyeongbuk', '경상남': 'gyeongnam', '창원': 'gyeongnam', '김해': 'gyeongnam', '진주': 'gyeongnam', '제주특별': 'jeju', '서귀포': 'jeju' };
+  const regionName = (code) => (REGIONS.find(r => r[0] === code) || [0, ''])[1];
+  function regionOf(c) {
+    const s = String(c.city || '');
+    const hit = REGIONS.find(([, n]) => s.startsWith(n)); if (hit) return hit[0];
+    const k = Object.keys(CITY_REGION).find(k => s.includes(k)); if (k) return CITY_REGION[k];
+    const v = venueOf(c); return v ? v.region : '';
+  }
+  function regionChips(all, current, fly) {
+    const cnt = (k) => all.filter(c => regionOf(c) === k).length;
+    return `<nav class="region-chips${fly ? ' fly' : ''}" aria-label="지역">${fly ? '' : `<a href="#concerts"${!current ? ' aria-current="page"' : ''}>전국 <b>${all.length}</b></a>`}${REGIONS.map(([k, n]) => { const x = cnt(k); return `<a href="#concerts-r-${k}" class="${x ? '' : 'zero'}"${current === k ? ' aria-current="page"' : ''}>${n}${x ? ` <b>${x}</b>` : ''}</a>`; }).join('')}</nav>`;
+  }
+  const concertNav = (kind) => `<nav class="subnav" aria-label="콘서트 목록 종류">${[['concerts', '전체 공연'], ['venues', '공연장 · 좌석 후기']].map(([k, l]) => `<a href="#${k}"${k === kind ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
+
+  /* ---------- 공연장 · 좌석 후기 ---------- */
+  const VENUES = [
+    { id: 'kspo', name: 'KSPO DOME', sub: '올림픽체조경기장', region: 'seoul', place: '서울 송파구 올림픽공원', match: ['KSPO', '체조경기장'] },
+    { id: 'olympichall', name: '올림픽홀', sub: '', region: 'seoul', place: '서울 송파구 올림픽공원', match: ['올림픽홀'] },
+    { id: 'livearena', name: '티켓링크 라이브 아레나', sub: '옛 핸드볼경기장', region: 'seoul', place: '서울 송파구 올림픽공원', match: ['라이브 아레나', '핸드볼경기장'] },
+    { id: 'jamsil', name: '잠실실내체육관', sub: '', region: 'seoul', place: '서울 송파구 잠실종합운동장', match: ['잠실실내'] },
+    { id: 'gocheok', name: '고척스카이돔', sub: '', region: 'seoul', place: '서울 구로구', match: ['고척'] },
+    { id: 'inspire', name: '인스파이어 아레나', sub: '', region: 'incheon', place: '인천 중구 영종도', match: ['인스파이어'] },
+    { id: 'kintex', name: '킨텍스', sub: 'KINTEX', region: 'gyeonggi', place: '경기 고양시 일산서구', match: ['킨텍스', 'KINTEX'] },
+    { id: 'bexco', name: '벡스코', sub: 'BEXCO', region: 'busan', place: '부산 해운대구', match: ['벡스코', 'BEXCO'] },
+    { id: 'sohyang', name: '소향씨어터', sub: '', region: 'busan', place: '부산 해운대구 센텀시티', match: ['소향'] }
+  ];
+  const venueOf = (c) => VENUES.find(v => v.match.some(k => String(c.venue || '').includes(k))) || null;
+  const FLOORS = ['플로어', '1층', '2층', '3층', '4층', '기타'];
+  const SEAT_TAGS = ['무대 정면', '무대 측면', '돌출 무대 가까움', '전광판 잘 보임', '멀지만 잘 보임', '기둥·장비 가림', '소리 선명', '소리 울림', '스피커 가까움', '경사 가파름', '다리 공간 좁음', '출입 편함'];
+  const SCORE = [['sight', '👀', '시야'], ['sound', '🔊', '음향'], ['comfort', '🪑', '편안함']];
+  function seatReviews(venueId) {
+    const out = [];
+    reviewDocs.forEach(d => Object.entries(d.seats || {}).forEach(([rid, r]) => { if (r && r.v === venueId && r.sight) out.push({ uid: d.uid, rid, ...r }); }));
+    return out.sort((a, b) => (b.at || 0) - (a.at || 0));
+  }
+  const avg3 = (list) => { const n = list.length; const f = (k) => n ? list.reduce((s, x) => s + (+x[k] || 0), 0) / n : 0; return { n, sight: f('sight'), sound: f('sound'), comfort: f('comfort') }; };
+  const secKey = (r) => (r.fl || '기타') + (r.sec ? ` ${r.sec}구역` : '');
+  const secLabel = (r) => secKey(r) + (r.row ? ` ${r.row}열` : '');
+  const seatFid = (rid) => 'seat-' + rid;
+  const miniStars = (n) => `<span class="mini-stars" aria-label="${n}점">${'★'.repeat(n)}<span class="off">${'★'.repeat(5 - n)}</span></span>`;
+  const vs = { id: null, fl: '', sec: '', sort: 'new', open: null, cmText: '', confirmDel: null, busy: false, msg: '', err: false, f: null };
+  const blankSeatForm = () => ({ fl: '', sec: '', row: '', show: '', sight: 0, sound: 0, comfort: 0, tags: [], text: '' });
+
+  function pageVenues() {
+    const cards = VENUES.map(v => {
+      const list = seatReviews(v.id); const a = avg3(list);
+      const shows = CONCERTS.filter(c => venueOf(c) === v && c.dEnd >= 0).length;
+      return `<a class="venue-card" href="#venue-${v.id}">
+        <span class="vc-top"><span class="muted">${esc(regionName(v.region))}</span>${shows ? `<span class="vc-live">공연 ${shows}</span>` : ''}</span>
+        <b class="fit" data-min="12">${esc(v.name)}</b><span class="muted vc-place">${esc(v.place)}</span>
+        <span class="vc-scores">${a.n ? SCORE.map(([k, e]) => `<span>${e} ${a[k].toFixed(1)}</span>`).join('') + `<span class="muted">후기 ${a.n}</span>` : '<span class="muted">아직 좌석 후기가 없어요</span>'}</span></a>`;
+    }).join('');
+    return `${listIntro('공연장', '공연장별 좌석 후기예요. 다녀온 공연의 구역과 열을 고르고 👀 시야, 🔊 음향, 🪑 편안함을 남기면 구역마다 평균이 모여요.', VENUES.length)}${concertNav('venues')}<div class="list-gap"></div><div class="venue-grid">${cards}</div>`;
+  }
+  function pageVenue(v) {
+    const shows = CONCERTS.filter(c => venueOf(c) === v).sort((a, b) => a.d - b.d);
+    return `<div class="intro venue-head"><div><div class="sub" style="margin:0 0 10px">공연장 · ${esc(regionName(v.region))}</div><h1 class="fit" data-min="18">${esc(v.name)}</h1>
+        <p class="muted">${v.sub ? esc(v.sub) + ' · ' : ''}${esc(v.place)}</p></div>
+        ${shows.length ? `<div class="venue-shows"><span class="muted">이 공연장의 공연</span>${shows.map(c => `<a class="link" href="#concert-${c.id}">${esc(cut(c.title, 26))} <span class="muted">${shortDate(c.dateObj)}</span></a>`).join('')}</div>` : ''}</div>
+      ${concertNav('venues')}
+      <div id="venue-stats"></div>
+      <div class="group-label"><span>좌석 후기 쓰기</span><span>✍️</span></div>
+      <div id="venue-form"></div>
+      <div class="group-label" id="venue-rv-label"><span>좌석 후기</span><span id="vr-count"></span></div>
+      <div id="venue-reviews"></div>
+      <div class="section-gap"><a class="link muted" href="#venues">← 공연장 목록</a></div>`;
+  }
+  function venueStatsHTML(v) {
+    const all = seatReviews(v.id); const a = avg3(all);
+    if (storeState === 'loading') return `<div class="note">좌석 후기를 불러오는 중…</div>`;
+    if (!a.n) return `<div class="venue-score empty"><div class="note">아직 좌석 후기가 없어요. 이 공연장에 다녀왔다면 첫 후기를 남겨 주세요.</div></div>`;
+    const groups = {};
+    all.forEach(r => { const k = secKey(r); (groups[k] = groups[k] || []).push(r); });
+    const rows = Object.entries(groups).map(([k, list]) => ({ k, ...avg3(list) })).sort((x, y) => y.n - x.n || y.sight - x.sight);
+    const top = (key) => rows.filter(r => r.n).sort((x, y) => y[key] - x[key] || y.n - x.n).slice(0, 3);
+    return `<div class="venue-score">${SCORE.map(([k, e, l]) => `<div class="vs-card"><span class="muted">${e} ${l}</span><b>${a[k].toFixed(1)}</b><span class="vs-bar"><i style="width:${a[k] / 5 * 100}%"></i></span></div>`).join('')}
+        <div class="vs-card"><span class="muted">💬 좌석 후기</span><b>${a.n}</b><span class="muted">${rows.length}개 구역</span></div></div>
+      ${rows.length > 1 ? `<div class="venue-top">${[['sight', '👀 시야 좋은 구역'], ['sound', '🔊 음향 좋은 구역']].map(([k, l]) => `<div><span class="muted">${l}</span><ol>${top(k).map(r => `<li><button type="button" class="link" data-seat-sec="${esc(r.k)}">${esc(r.k)}</button><span class="muted">${r[k].toFixed(1)}</span></li>`).join('')}</ol></div>`).join('')}</div>` : ''}
+      <div class="sec-table"><table><thead><tr><th>구역</th>${SCORE.map(([, e, l]) => `<th title="${l}">${e}</th>`).join('')}<th>후기</th></tr></thead><tbody>
+        ${rows.map(r => `<tr class="${vs.sec === r.k ? 'on' : ''}"><td><button type="button" class="link" data-seat-sec="${esc(r.k)}">${esc(r.k)}</button></td>${SCORE.map(([k]) => `<td>${r[k].toFixed(1)}</td>`).join('')}<td>${r.n}</td></tr>`).join('')}
+      </tbody></table><div class="hint">구역을 누르면 그 구역 후기만 볼 수 있어요.</div></div>`;
+  }
+  function seatFormHTML(v) {
+    const can = myId && canWrite && storeState === 'ready';
+    if (!can) return `<div class="note">${storeState === 'loading' ? '불러오는 중…' : (storeState === 'off' || !myId) ? '로그인하면 좌석 후기를 남길 수 있어요.' : storeState === 'error' ? '후기를 불러오지 못했어요. 페이지를 다시 열어 주세요.' : '후기를 남길 권한이 없어요.'}</div>`;
+    const f = vs.f;
+    const shows = CONCERTS.filter(c => venueOf(c) === v);
+    return `<form class="seat-form" id="seat-form" autocomplete="off">
+      <div class="sf-row three">
+        <label><span>층</span><select id="sf-fl"><option value="">고르기</option>${FLOORS.map(x => `<option ${f.fl === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+        <label><span>구역</span><input type="text" id="sf-sec" maxlength="12" placeholder="예: 15, A" value="${esc(f.sec)}"></label>
+        <label><span>열 (선택)</span><input type="text" id="sf-row" maxlength="8" placeholder="예: 5" value="${esc(f.row)}"></label>
+      </div>
+      <label class="sf-row"><span>본 공연</span><input type="text" id="sf-show" list="sf-shows" maxlength="60" placeholder="예: DAY6 콘서트 (목록에서 고르거나 직접 적기)" value="${esc(f.show)}">
+        <datalist id="sf-shows">${shows.map(c => `<option value="${esc(c.title)}">`).join('')}</datalist></label>
+      <div class="sf-scores">${SCORE.map(([k, e, l]) => `<div class="sf-score"><span>${e} ${l}</span><span class="stars" role="radiogroup" aria-label="${l} 점수">${[1, 2, 3, 4, 5].map(n => `<button type="button" role="radio" aria-checked="${f[k] === n}" aria-label="${l} ${n}점" data-seat-star="${k}|${n}" class="${n <= f[k] ? 'on' : ''}">★</button>`).join('')}</span></div>`).join('')}</div>
+      <div class="sf-row"><span>이런 자리였어요 (여러 개 고르기)</span><div class="tag-pick">${SEAT_TAGS.map(t => `<button type="button" class="tag-btn" data-seat-tag="${esc(t)}" aria-pressed="${f.tags.includes(t)}">${esc(t)}</button>`).join('')}</div></div>
+      <label class="sf-row"><span>후기</span><textarea id="sf-text" rows="4" maxlength="1000" placeholder="무대가 어떻게 보였는지, 소리는 어땠는지, 다음에 이 자리를 고를지 적어 주세요.">${esc(f.text)}</textarea></label>
+      <div class="editor-actions"><span class="msg ${vs.err ? 'err' : ''}" id="sf-msg">${esc(vs.msg)}</span><button type="submit" class="submit" id="sf-submit">후기 올리기</button></div>
+    </form>`;
+  }
+  function seatCardHTML(r) {
+    const fid = seatFid(r.rid);
+    const likes = likeCount(r.uid, fid), liked = !!myLikes()[likeKey(r.uid, fid)];
+    const cms = commentsFor(r.uid, fid);
+    const mine = r.uid === myId;
+    const can = myId && canWrite && storeState === 'ready';
+    const key = r.uid + '|' + r.rid;
+    const open = vs.open === key;
+    return `<article class="seat-rv">
+      <div class="sr-head"><b>${esc(secLabel(r))}</b>${r.show ? `<span class="muted">· ${esc(r.show)}</span>` : ''}</div>
+      <div class="sr-scores">${SCORE.map(([k, e, l]) => `<span>${e} ${l} ${miniStars(+r[k] || 0)}</span>`).join('')}</div>
+      ${(r.tags || []).length ? `<div class="sr-tags">${r.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>` : ''}
+      ${r.text ? `<p>${esc(r.text)}</p>` : ''}
+      <div class="sr-foot"><span class="muted"><span data-name="${esc(r.uid)}">관람객</span> · ${r.at ? fmtDate(new Date(r.at)) : ''}</span>
+        <span class="sr-acts">
+          <button type="button" class="like-btn" data-seat-like="${esc(key)}" aria-pressed="${liked}" ${!can || mine ? 'disabled' : ''} title="${mine ? '내 후기에는 공감할 수 없어요' : '공감'}">♥ 공감 ${likes}</button>
+          <button type="button" class="like-btn" data-seat-cm="${esc(key)}" aria-expanded="${open}">💬 댓글 ${cms.length}</button>
+          ${mine ? (vs.confirmDel === r.rid ? `<span class="muted">삭제할까요?</span><button type="button" class="link danger" data-seat-del="${esc(r.rid)}">삭제</button><button type="button" class="link" data-seat-del="">취소</button>` : `<button type="button" class="link danger" data-seat-delask="${esc(r.rid)}">삭제</button>`) : ''}
+        </span></div>
+      ${open ? `<div class="sr-cms">${cms.map(c => `<div class="sr-cm"><span><b data-name="${esc(c.by)}">관람객</b> ${esc(c.text)}</span><span class="muted">${fmtDate(new Date(c.at))}${c.by === myId ? ` <button type="button" class="link danger" data-seat-cmdel="${esc(c.key)}">삭제</button>` : ''}</span></div>`).join('') || '<div class="muted">아직 댓글이 없어요.</div>'}
+        ${can ? `<form class="sr-cm-form" id="seat-cm-form" data-key="${esc(key)}"><input type="text" id="seat-cm-text" maxlength="300" placeholder="댓글 달기" value="${esc(vs.cmText)}"><button type="submit" class="submit">등록</button></form>` : ''}</div>` : ''}
+    </article>`;
+  }
+  function venueReviewsHTML(v) {
+    let list = seatReviews(v.id);
+    if (!list.length) return storeState === 'loading' ? '' : `<div class="muted">아직 올라온 좌석 후기가 없어요.</div>`;
+    const floors = FLOORS.filter(f => list.some(r => (r.fl || '기타') === f));
+    if (vs.fl) list = list.filter(r => (r.fl || '기타') === vs.fl);
+    if (vs.sec) list = list.filter(r => secKey(r) === vs.sec);
+    if (vs.sort === 'likes') list = [...list].sort((a, b) => likeCount(b.uid, seatFid(b.rid)) - likeCount(a.uid, seatFid(a.rid)) || (b.at || 0) - (a.at || 0));
+    const chip = (attr, val, label, on) => `<button type="button" class="tag-btn" ${attr}="${esc(val)}" aria-pressed="${on}">${esc(label)}</button>`;
+    return `<div class="sr-filter"><div class="tag-pick">${chip('data-seat-fl', '', '전체', !vs.fl && !vs.sec)}${floors.map(f => chip('data-seat-fl', f, f, vs.fl === f && !vs.sec)).join('')}${vs.sec ? chip('data-seat-sec', '', vs.sec + ' ✕', true) : ''}</div>
+        <div class="sr-sort">${[['new', '최신순'], ['likes', '공감순']].map(([k, l]) => `<button type="button" class="link${vs.sort === k ? '' : ' muted'}" data-seat-sort="${k}">${l}</button>`).join('')}</div></div>
+      ${list.length ? list.map(seatCardHTML).join('') : '<div class="muted">조건에 맞는 후기가 없어요.</div>'}`;
+  }
+  function renderVenueLive() {
+    const r = currentRoute(); if (r.view !== 'venue') return;
+    const v = VENUES.find(x => x.id === r.id); if (!v) return;
+    const cmFocus = document.activeElement?.id === 'seat-cm-text';
+    if ($('seat-cm-text')) vs.cmText = $('seat-cm-text').value;
+    const st = $('venue-stats'); if (st) st.innerHTML = venueStatsHTML(v);
+    const rv = $('venue-reviews'); if (rv) rv.innerHTML = venueReviewsHTML(v);
+    const n = $('vr-count'); if (n) n.textContent = seatReviews(v.id).length || '';
+    if (cmFocus && $('seat-cm-text')) { const i = $('seat-cm-text'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+    fillNames([...new Set([...document.querySelectorAll('#venue-reviews [data-name]')].map(e => e.dataset.name))]);
+  }
+  function renderSeatForm() {
+    const r = currentRoute(); const v = VENUES.find(x => x.id === r.id); const box = $('venue-form');
+    if (box && v) box.innerHTML = seatFormHTML(v);
+  }
+  function syncSeatForm() {
+    if (!vs.f) return;
+    const g = (id) => $(id)?.value ?? null;
+    [['fl', 'sf-fl'], ['sec', 'sf-sec'], ['row', 'sf-row'], ['show', 'sf-show'], ['text', 'sf-text']].forEach(([k, id]) => { const x = g(id); if (x !== null) vs.f[k] = x; });
+  }
+  function seatMsg(t, err) { vs.msg = t; vs.err = !!err; const el = $('sf-msg'); if (el) { el.textContent = t; el.className = 'msg' + (err ? ' err' : ''); } }
+  async function saveSeat(v) {
+    if (vs.busy) return;
+    syncSeatForm();
+    const f = vs.f;
+    if (!f.fl) return seatMsg('층을 골라 주세요.', true);
+    if (!f.sight || !f.sound || !f.comfort) return seatMsg('👀 시야, 🔊 음향, 🪑 편안함 별점을 모두 매겨 주세요.', true);
+    const seats = { ...(myDoc().seats || {}) };
+    if (Object.keys(seats).length >= 100) return seatMsg('좌석 후기는 한 사람당 100개까지 남길 수 있어요.', true);
+    const rid = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    seats[rid] = { v: v.id, fl: f.fl, sec: f.sec.trim().replace(/\s*구역$/, '').slice(0, 12), row: f.row.trim().replace(/\s*열$/, '').slice(0, 8), show: f.show.trim().slice(0, 60),
+      sight: f.sight, sound: f.sound, comfort: f.comfort, tags: f.tags.filter(t => SEAT_TAGS.includes(t)), text: f.text.trim().slice(0, 1000), at: Date.now() };
+    const patch = { seats };
+    try { if (typeof useNick !== 'undefined' && useNick && !myDoc().nick && typeof savedNick === 'function' && savedNick()) patch.nick = savedNick().slice(0, 20); } catch {}
+    vs.busy = true; $('sf-submit').disabled = true; seatMsg('올리는 중이에요…');
+    try {
+      await saveMyDoc(patch);
+      vs.f = blankSeatForm(); vs.msg = ''; vs.err = false; vs.fl = ''; vs.sec = '';
+      toast('좌석 후기를 올렸어요'); renderSeatForm(); renderVenueLive();
+      $('venue-rv-label')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) { seatMsg(e?.code === 'quota_exceeded' ? '저장 공간이 가득 찼어요.' : '저장하지 못했어요. 잠시 후 다시 시도해 주세요.', true); }
+    finally { vs.busy = false; const b = $('sf-submit'); if (b) b.disabled = false; }
+  }
+  async function seatClick(e) {
+    const t = (sel) => e.target.closest(sel);
+    let b;
+    if ((b = t('[data-seat-star]'))) {
+      const [k, n] = b.dataset.seatStar.split('|'); vs.f[k] = +n;
+      b.parentElement.querySelectorAll('button').forEach((x, i) => { x.classList.toggle('on', i < +n); x.setAttribute('aria-checked', String(i + 1 === +n)); });
+      return true;
+    }
+    if ((b = t('[data-seat-tag]'))) {
+      const tag = b.dataset.seatTag; const on = vs.f.tags.includes(tag);
+      vs.f.tags = on ? vs.f.tags.filter(x => x !== tag) : [...vs.f.tags, tag]; b.setAttribute('aria-pressed', String(!on));
+      return true;
+    }
+    if ((b = t('[data-seat-fl]'))) { vs.fl = b.dataset.seatFl; vs.sec = ''; renderVenueLive(); return true; }
+    if ((b = t('[data-seat-sec]'))) { vs.sec = vs.sec === b.dataset.seatSec ? '' : b.dataset.seatSec; vs.fl = ''; renderVenueLive(); if (vs.sec) $('venue-rv-label')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return true; }
+    if ((b = t('[data-seat-sort]'))) { vs.sort = b.dataset.seatSort; renderVenueLive(); return true; }
+    if ((b = t('[data-seat-cm]'))) { vs.open = vs.open === b.dataset.seatCm ? null : b.dataset.seatCm; vs.cmText = ''; renderVenueLive(); if (vs.open) $('seat-cm-text')?.focus(); return true; }
+    if ((b = t('[data-seat-delask]'))) { vs.confirmDel = b.dataset.seatDelask; renderVenueLive(); return true; }
+    if ((b = t('[data-seat-del]'))) {
+      const rid = b.dataset.seatDel; vs.confirmDel = null;
+      if (!rid) { renderVenueLive(); return true; }
+      const seats = { ...(myDoc().seats || {}) }; delete seats[rid];
+      try { await saveMyDoc({ seats }); toast('좌석 후기를 삭제했어요'); } catch { toast('삭제하지 못했어요.'); renderVenueLive(); }
+      return true;
+    }
+    if ((b = t('[data-seat-like]'))) {
+      const [uid, rid] = b.dataset.seatLike.split('|'); const k = likeKey(uid, seatFid(rid));
+      const likes = { ...myLikes() }; if (likes[k]) delete likes[k]; else likes[k] = true;
+      try { await saveMyDoc({ likes }); } catch { toast('공감하지 못했어요.'); }
+      return true;
+    }
+    if ((b = t('[data-seat-cmdel]'))) {
+      const comments = { ...(myDoc().comments || {}) }; delete comments[b.dataset.seatCmdel];
+      try { await saveMyDoc({ comments }); toast('댓글을 삭제했어요'); } catch { toast('삭제하지 못했어요.'); }
+      return true;
+    }
+    return false;
+  }
+  async function seatCommentSubmit(formEl) {
+    const input = $('seat-cm-text'); const text = (input?.value || '').trim(); if (!text) return;
+    const [uid, rid] = formEl.dataset.key.split('|');
+    const cid = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    const comments = { ...(myDoc().comments || {}), [uid + '~' + seatFid(rid) + '~' + cid]: { text: text.slice(0, 300), at: Date.now() } };
+    try { vs.cmText = ''; input.value = ''; await saveMyDoc({ comments }); } catch { vs.cmText = text; toast('댓글을 올리지 못했어요.'); renderVenueLive(); }
+  }
+  /*VENUES-END*/
 
   /* ---------- 리뷰 ---------- */
   // reviews/<viewerId> 문서 하나에 { films: { <영화id>: {rating, text, at}, ... } }
@@ -336,7 +601,7 @@
   // 👍/👎: 직접 고른 값이 없으면(예전 리뷰) 별점 3점 이상을 👍로 봄
   // 추천: 각 사람의 reviews/<id> 문서 안 likes 맵에 "작성자id~영화id": true 로 저장
   const likeKey = (uid, filmId) => uid + '~' + filmId;
-  const myDoc = () => reviewDocs.find(d => d.uid === myId) || { films: {}, likes: {}, comments: {}, hype: {} };
+  const myDoc = () => reviewDocs.find(d => d.uid === myId) || { films: {}, likes: {}, comments: {}, hype: {}, seats: {} };
   // 기대돼요: 각 사람의 reviews/<id> 문서 안 hype 맵에 "영화id": true
   const hypeCount = (filmId) => reviewDocs.filter(d => d.hype && d.hype[filmId]).length;
   const myHype = (filmId) => !!(myDoc().hype || {})[filmId];
@@ -353,7 +618,7 @@
   }
   const myLikes = () => myDoc().likes || {};
   const likeCount = (uid, filmId) => { const k = likeKey(uid, filmId); return reviewDocs.filter(d => d.likes && d.likes[k]).length; };
-  const docBody = (d, patch) => { const b = { films: d?.films || {}, likes: d?.likes || {}, comments: d?.comments || {}, hype: d?.hype || {} }; if (d?.nick) b.nick = d.nick; return { ...b, ...patch }; };
+  const docBody = (d, patch) => { const b = { films: d?.films || {}, likes: d?.likes || {}, comments: d?.comments || {}, hype: d?.hype || {} }; if (d?.nick) b.nick = d.nick; if (d?.seats && Object.keys(d.seats).length) b.seats = d.seats; /* 좌석 후기가 있을 때만 보냄 (예전 보안 규칙에서도 영화 리뷰는 저장되도록) */ return { ...b, ...patch }; };
   let useNick = false;   // GitHub 버전: 이름 대신 닉네임을 써요
   const savedNick = () => { try { return localStorage.getItem('smo.nick') || ''; } catch { return ''; } };
   const nickHTML = () => useNick ? `<input type="text" id="rv-nick" class="rv-title" maxlength="20" placeholder="닉네임 (다른 사람에게 보이는 이름, 20자까지)" value="${esc(form.nick || myDoc().nick || savedNick())}">` : '';
@@ -526,6 +791,7 @@
 
   /* ---------- 이벤트 ---------- */
   document.addEventListener('click', async (e) => {
+    if (vs.f && currentRoute().view === 'venue' && e.target.closest('#page') && await seatClick(e)) return;
     const mAct = e.target.closest('[data-movie-act]');
     if (mAct) {
       const r = currentRoute();
@@ -627,6 +893,8 @@
   });
   document.addEventListener('submit', async (e) => {
     if (e.target.id === 'movie-form') { e.preventDefault(); await saveMovie(); return; }
+    if (e.target.id === 'seat-form') { e.preventDefault(); const v = VENUES.find(x => x.id === currentRoute().id); if (v) await saveSeat(v); return; }
+    if (e.target.id === 'seat-cm-form') { e.preventDefault(); await seatCommentSubmit(e.target); return; }
     if (e.target.id === 'cm-form') {
       e.preventDefault();
       if (form.cmBusy) return;
@@ -775,10 +1043,12 @@
       render(true);
     }, () => { movieState = 'off'; render(true); });
     db.collection('reviews').onSnapshot(snap => {
-      reviewDocs = snap.docs.map(d => { const x = d.data() || {}; return { uid: d.id, films: x.films || {}, likes: x.likes || {}, comments: x.comments || {}, hype: x.hype || {}, nick: x.nick || '' }; });
+      reviewDocs = snap.docs.map(d => { const x = d.data() || {}; return { uid: d.id, films: x.films || {}, likes: x.likes || {}, comments: x.comments || {}, hype: x.hype || {}, seats: x.seats || {}, nick: x.nick || '' }; });
+      const wasReady = storeState === 'ready';
       storeState = 'ready';
       const r = currentRoute();
       if (r.view === 'movie') { renderSummary(); renderHype(); }
+      else if (r.view === 'venue') { if (!wasReady) renderSeatForm(); renderVenueLive(); }
       else if (r.view === 'reviews') { const a = document.activeElement?.id; if (a !== 'rv-text' && a !== 'rv-title' && a !== 'cm-text') renderReviews(); }
       else if (r.view === 'list') render(true);
       else if (r.view === 'home') { const n = $('home-news'); if (n) n.innerHTML = homeNewsHTML(); }
@@ -878,7 +1148,8 @@
       `<div class="fly-col fly-big"><a href="#concerts">전체 공연</a></div>`,
       flyCol('다가오는 공연', '', list.slice(0, 6).map(c => flyItem(`#concert-${c.id}`, c.title, `${shortDate(c.dateObj)} ${esc(c.city)}`)), '예정된 공연이 없어요.'),
       flyCol('장르', '', count('genre').map(([g, n]) => flyItem('#concerts', g, n)), '정보가 없어요.'),
-      flyCol('지역', '', count('city').map(([g, n]) => flyItem('#concerts', g, n)), '정보가 없어요.')
+      `<div class="fly-col"><h4><a href="#concerts">지역</a></h4>${regionChips(list, '', true)}</div>`,
+      flyCol('공연장 · 좌석 후기', '#venues', VENUES.map(v => { const n = seatReviews(v.id).length; return flyItem(`#venue-${v.id}`, v.name, n ? `💬 ${n}` : esc(regionName(v.region))); }), '')
     ].join('');
   }
   /* ---------- 긴 제목 맞추기: 잘리거나 줄이 바뀌지 않게 한 줄에 들어갈 때까지 글자를 줄임 ---------- */
@@ -977,11 +1248,13 @@
     // 첫 화면: 영화 / 콘서트 두 항목만. 누르면 목록(#movies / #concerts)으로 이동
     if (!started || h === '' || h === 'home') return { view: 'home' };
     if (LISTS[h]) return { view: 'list', kind: h };
+    let rg = h.match(/^concerts-r-([a-z]+)$/); if (rg && regionName(rg[1])) return { view: 'list', kind: 'concerts', region: rg[1] };
+    rg = h.match(/^venue-([a-z]+)$/); if (rg && VENUES.find(v => v.id === rg[1])) return { view: 'venue', id: rg[1] };
     if (h === 'movie-new') return { view: 'editor', id: null };
     let m = h.match(/^edit-([A-Za-z0-9]+)$/); if (m) return { view: 'editor', id: m[1] };
     m = h.match(/^reviews-([A-Za-z0-9]+)$/); if (m) return { view: 'reviews', id: m[1] };
     m = h.match(/^movie-([A-Za-z0-9]+)$/); if (m) return { view: 'movie', id: m[1] };
-    m = h.match(/^concert-(c\d+)$/); if (m && CONCERTS.find(x => x.id === m[1])) return { view: 'concert', id: m[1] };
+    m = h.match(/^concert-([A-Za-z0-9]+)$/); if (m && CONCERTS.find(x => x.id === m[1])) return { view: 'concert', id: m[1] };
     return { view: 'home' };
   }
   function pageHome() {
@@ -1188,15 +1461,16 @@
   });
 
   /* ---------- 두 번째 화면: 고른 항목만 보여 주는 목록 ---------- */
-  const LISTS = { movies: 1, 'movies-picks': 1, 'movies-now': 1, 'movies-soon': 1, 'movies-reviews': 1, 'movies-perks': 1, concerts: 1 };
+  const LISTS = { movies: 1, 'movies-picks': 1, 'movies-now': 1, 'movies-soon': 1, 'movies-reviews': 1, 'movies-perks': 1, concerts: 1, venues: 1 };
   function subNav(kind) {
     const tabs = [['movies', '전체'], ['movies-picks', '추천'], ['movies-now', '개봉작'], ['movies-soon', '개봉예정작'], ['movies-reviews', '후기'], ['movies-perks', '특전']];
     return `<nav class="subnav" aria-label="영화 목록 종류">${tabs.map(([k, l]) => `<a href="#${k}"${k === kind ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
   }
   const listIntro = (title, desc, count) => `<div class="intro"><h1>${title}${count != null ? ` (${count})` : ''}</h1><div><p>${desc}</p></div></div>`;
   const posterGrid = (list, empty) => list.length ? `<div class="works">${list.map(movieWork).join('')}</div>` : `<div class="note">${empty}</div>`;
-  function pageList(kind) {
-    if (kind === 'concerts') return pageConcerts();
+  function pageList(kind, route) {
+    if (kind === 'concerts') return pageConcerts(route && route.region);
+    if (kind === 'venues') return pageVenues();
     if (kind === 'movies') return pageMovies();
     if (movieState === 'loading') return listIntro('영화', '영화 목록을 불러오는 중이에요…');
     const all = allMovies();
@@ -1254,13 +1528,19 @@
     $('view-home').hidden = true;
     $('inner').hidden = false;
     document.body.classList.toggle('is-home', r.view === 'home');
-    const tab = r.view === 'concert' || r.kind === 'concerts' ? 'concerts' : r.view === 'home' ? '' : 'movies';
+    const tab = r.view === 'concert' || r.view === 'venue' || r.kind === 'concerts' || r.kind === 'venues' ? 'concerts' : r.view === 'home' ? '' : 'movies';
     document.querySelectorAll('header.top nav a').forEach(a => { if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     const page = $('page');
     if (r.view === 'home') page.innerHTML = pageHome();
     else if (r.view === 'list') {
-      page.innerHTML = pageList(r.kind);
+      page.innerHTML = pageList(r.kind, r);
       fillNames([...new Set([...page.querySelectorAll('[data-name]')].map(e => e.dataset.name))]);
+    }
+    else if (r.view === 'venue') {
+      if (fromData && $('venue-form')) { renderVenueLive(); return; }
+      if (vs.id !== r.id) Object.assign(vs, { id: r.id, fl: '', sec: '', sort: 'new', open: null, cmText: '', confirmDel: null, msg: '', err: false, f: blankSeatForm() });
+      page.innerHTML = pageVenue(VENUES.find(x => x.id === r.id));
+      renderSeatForm(); renderVenueLive();
     }
     else if (r.view === 'concert') page.innerHTML = pageConcert(CONCERTS.find(x => x.id === r.id));
     else if (r.view === 'movie' || r.view === 'reviews') {

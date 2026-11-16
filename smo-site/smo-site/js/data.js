@@ -436,35 +436,35 @@ window.SMO_MOVIES.push(
     genre: "스릴러, 서바이벌", dir: "마이클 스피어리그, 피터 스피어리그",
     cast: [{ name: "해리엇 슬레이터", role: "잭스" }, { name: "아르세마 토마스", role: "루스" }, { name: "톰 브리트니", role: "" }],
     syn: "수십 년간 출입이 금지된 해발 3,300m의 산 '콴'.\n\n전작 주인공 샤일로의 동생 잭스와 샤일로의 친구 루스가 그 절벽에 도전한다. 발 디딜 곳 하나 없는 고공에서 두 사람은 살아서 내려가기 위한 사투를 벌인다.\n\n「폴: 600미터」의 후속작으로, 실제 고공 촬영으로 완성한 98분 생존극.",
-    trailer: "", poster: ""
+    trailer: "", poster: "images/posters/mvnfall2.webp"
   },
   {
     id: "mvnhexed", title: "헥스: 마녀왕국", en: "Hexed", date: "2026-11-25", rate: "", run: "",
     genre: "애니메이션, 판타지, 가족", dir: "제이슨 핸드, 조시 트리니다드, 폰 비라선손",
     cast: [{ name: "헤일리 스타인펠드", role: "빌리 (원어)" }, { name: "라시다 존스", role: "엄마 (원어)" }],
     syn: "마법을 막아 주던 팔찌가 풀리면서 평범한 소녀 빌리는 자신에게 마법 능력이 있다는 걸 알게 된다.\n\n마녀들의 세계 '헥스'에 들어선 빌리 앞에 자신을 둘러싼 예언과 엄마의 비밀이 드러나고, 강력한 마법 세력이 모녀를 노린다.\n\n「겨울왕국」·「주토피아」 제작진의 디즈니 애니메이션. 오프닝 단편 「릴로 & 스크래치」가 함께 상영된다.",
-    trailer: "https://www.youtube.com/watch?v=TfgeA9uUneg", poster: ""
+    trailer: "https://www.youtube.com/watch?v=TfgeA9uUneg", poster: "images/posters/mvnhexed.webp"
   },
   {
     id: "mvngongmu", title: "공무도하", en: "", date: "2026-11-25", rate: "15", run: 103,
     genre: "드라마", dir: "한정국",
     cast: [{ name: "윤제인", role: "선화" }, { name: "이지석", role: "김동철" }, { name: "이동재", role: "이동수" }, { name: "홍성준", role: "" }],
     syn: "열여덟 살 선화는 두만강을 건너 남한에 오지만 가족을 잃고 홀로 남는다.\n\n낯선 사회에서 버티던 선화는 가출 청소년들을 만나 함께 지내며 새로운 가족을 이뤄 간다.\n\n무연고 탈북 청소년의 실화와 고대가요 '공무도하가'에서 출발한 한정국 감독의 장편 데뷔작. 유바리 국제 판타스틱 영화제 대상 수상작.",
-    trailer: "", poster: ""
+    trailer: "", poster: "images/posters/mvngongmu.jpg"
   },
   {
     id: "mvndoomsday", title: "어벤져스: 둠스데이", en: "Avengers: Doomsday", date: "2026-12-16", rate: "", run: "",
     genre: "액션, SF, 어드벤처", dir: "안소니 루소, 조 루소",
     cast: [{ name: "로버트 다우니 주니어", role: "닥터 둠" }, { name: "크리스 에반스", role: "" }, { name: "크리스 헴스워스", role: "" }, { name: "페드로 파스칼", role: "" }, { name: "플로렌스 퓨", role: "" }, { name: "톰 히들스턴", role: "" }],
     syn: "「어벤져스: 엔드게임」 이후 7년 만의 어벤져스 신작.\n\n여러 우주가 무너지는 위기 속에서 멀티버스의 히어로들이 한자리에 모이고, 로버트 다우니 주니어가 최강의 빌런 닥터 둠으로 돌아온다.\n\n국내는 북미보다 이틀 빠른 12월 16일에 개봉한다.",
-    trailer: "https://www.youtube.com/watch?v=Wkg430JD9Yo", poster: ""
+    trailer: "https://www.youtube.com/watch?v=Wkg430JD9Yo", poster: "images/posters/mvndoomsday.webp"
   },
   {
     id: "mvndune3", title: "듄: 파트 3", en: "Dune: Part Three", date: "2026-12-16", rate: "", run: 151,
     genre: "SF, 어드벤처", dir: "드니 빌뇌브",
     cast: [{ name: "티모시 샬라메", role: "폴 아트레이데스" }, { name: "젠데이아", role: "챠니" }, { name: "로버트 패틴슨", role: "" }, { name: "플로렌스 퓨", role: "" }, { name: "안야 테일러-조이", role: "" }, { name: "제이슨 모모아", role: "" }],
     syn: "소설 「듄 메시아」를 바탕으로 한 「듄」 3부작의 마지막 이야기.\n\n황제의 자리에 오른 폴 아트레이데스와 그를 둘러싼 우주의 운명이 마무리된다.\n\n한국에서 세계 최초로 개봉하며, 러닝타임은 3부작 중 가장 짧은 2시간 31분이다.",
-    trailer: "https://www.youtube.com/watch?v=s_iIr07coIw", poster: ""
+    trailer: "https://www.youtube.com/watch?v=s_iIr07coIw", poster: "images/posters/mvndune3.webp"
   }
 );
 

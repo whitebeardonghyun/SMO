@@ -218,7 +218,7 @@
         <div class="r"><label for="f-en">영문 제목</label><input type="text" id="f-en" maxlength="80" value="${esc(v.en)}"></div>
         <div class="r"><label class="req" for="f-date">개봉일</label><div><input type="date" id="f-date" value="${esc(v.date)}" required><div class="hint">오늘보다 뒤면 ‘개봉 예정’, 오늘이거나 지났으면 ‘상영중’에 나와요.</div></div></div>
         <div class="r"><label for="f-rate">등급 / 상영 시간</label><div class="two">
-          <select id="f-rate">${[['all','전체관람가'],['12','12세 이상'],['15','15세 이상'],['19','청소년관람불가']].map(([k,l]) => `<option value="${k}" ${v.rate === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+          <select id="f-rate">${[['','등급 미정'],['all','전체관람가'],['12','12세 이상'],['15','15세 이상'],['19','청소년관람불가']].map(([k,l]) => `<option value="${k}" ${(v.rate || '') === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
           <input type="number" id="f-run" min="1" max="600" placeholder="분" value="${esc(v.run)}"></div></div>
         <div class="r"><label for="f-genre">장르</label><input type="text" id="f-genre" maxlength="40" placeholder="예: 드라마, 스릴러" value="${esc(v.genre)}"></div>
         <div class="r"><label for="f-dir">감독</label><input type="text" id="f-dir" maxlength="60" value="${esc(v.dir)}"></div>
@@ -781,6 +781,7 @@
       if (r.view === 'movie') { renderSummary(); renderHype(); }
       else if (r.view === 'reviews') { const a = document.activeElement?.id; if (a !== 'rv-text' && a !== 'rv-title' && a !== 'cm-text') renderReviews(); }
       else if (r.view === 'list') render(true);
+      else if (r.view === 'home') { const n = $('home-news'); if (n) n.innerHTML = homeNewsHTML(); }
     }, () => { storeState = 'error'; renderReviews(); renderSummary(); });
   }
 
@@ -902,6 +903,24 @@
   window.addEventListener('resize', queueFit);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueFit);
 
+  /* ---------- 라이트 / 다크 전환 (기본: 라이트, 고른 값은 브라우저에 기억) ---------- */
+  const themeBtn = $('theme-btn');
+  function applyTheme(t) {
+    const dark = t === 'dark';
+    if (dark) document.documentElement.setAttribute('data-smo-theme', 'dark'); else document.documentElement.removeAttribute('data-smo-theme');
+    if (themeBtn) {
+      themeBtn.textContent = dark ? '☀️ 라이트' : '🌙 다크';
+      themeBtn.setAttribute('aria-label', dark ? '라이트 모드로 바꾸기' : '다크 모드로 바꾸기');
+      themeBtn.setAttribute('aria-pressed', String(dark));
+    }
+  }
+  applyTheme((() => { try { return localStorage.getItem('smo.theme') || 'light'; } catch { return 'light'; } })());
+  themeBtn?.addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-smo-theme') === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    try { localStorage.setItem('smo.theme', next); } catch {}
+  });
+
   /* ---------- 사진 크게 보기 (원본 해상도) ---------- */
   const lightbox = document.createElement('div');
   lightbox.className = 'lightbox'; lightbox.hidden = true;
@@ -972,8 +991,56 @@
         <a class="choice2" href="#movies" data-home="movies" aria-haspopup="true" aria-expanded="false"><span class="lbl">영화</span><span class="word">Movie</span></a>
         <a class="choice2" href="#concerts" data-home="concerts" aria-haspopup="true" aria-expanded="false"><span class="lbl">콘서트</span><span class="word">Concert</span></a>
       </div>
+      <div class="marquee">${marqueeHTML()}</div>
       <div class="home-sub" id="home-sub"></div>
+    </div>
+    <div class="home-news" id="home-news">${homeNewsHTML()}</div>`;
+  }
+
+  /* ---------- 첫 화면: 흐르는 포스터 띠 (평소: 영화+콘서트 / 영화에 올리면 영화 / 콘서트에 올리면 콘서트) ---------- */
+  const mqMovie = (m) => `<a class="mq-item" href="#movie-${m.id}" tabindex="-1">${frame(m, 'poster', 1)}</a>`;
+  const mqConcert = (c) => `<a class="mq-concert" href="#concert-${c.id}" tabindex="-1"><span class="mq-cp">${frame(c, 'poster', 1)}</span>
+    <span class="mq-ci"><b class="fit" data-min="10">${esc(c.title)}</b><span>${fmtKo(c.dateObj)}${c.tm ? ' ' + esc(c.tm) : ''}</span><span>${esc(c.venue)}</span></span></a>`;
+  function marqueeHTML() {
+    const all = allMovies();
+    if (!all.length && !CONCERTS.length) return '';
+    const now = all.filter(m => m.rel <= 0), soon = all.filter(m => m.rel > 0);
+    const cons = [...CONCERTS].sort((a, b) => a.d - b.d);
+    const fill = (arr, min) => { let out = [...arr]; while (arr.length && out.length < min) out = out.concat(arr); return out; };
+    // 같은 목록을 두 번 이어 붙여서 끊김 없이 계속 흐르게 함
+    const row = (items, render, rev, secPerItem) => {
+      const list = fill(items, 10);
+      const html = list.map(render).join('');
+      return `<div class="mq-row"><div class="mq-track${rev ? ' rev' : ''}" style="--dur:${Math.max(24, list.length * secPerItem)}s">${html}${html}</div></div>`;
+    };
+    return `<div class="mq-stage" aria-hidden="true">
+      <div class="mq-set on" data-set="mix">${row(all, mqMovie, false, 3.5)}${row(cons, mqConcert, true, 6)}</div>
+      <div class="mq-set" data-set="movies">${row(now.length ? now : all, mqMovie, false, 3.5)}${row(soon.length ? soon : all, mqMovie, true, 3.5)}</div>
+      <div class="mq-set" data-set="concerts">${row(cons, mqConcert, false, 6)}${row([...cons].reverse(), mqConcert, true, 6)}</div>
     </div>`;
+  }
+  function setMarquee(kind) {
+    document.querySelectorAll('.mq-set').forEach(s => s.classList.toggle('on', s.dataset.set === (kind || 'mix')));
+  }
+
+  /* ---------- 첫 화면: 오늘의 SMO 소식 ---------- */
+  function homeNewsHTML() {
+    const all = allMovies();
+    const card = (href, label, main, sub) => `<a class="hn-card" href="${href}"><span class="hn-label">${label}</span><span class="hn-main fit" data-min="11">${esc(main)}</span><span class="hn-sub">${esc(sub)}</span></a>`;
+    const out = [];
+    const topRate = all.filter(m => m.stats && m.stats.rate).sort((a, b) => b.stats.rate.pct - a.stats.rate.pct)[0];
+    if (topRate) out.push(card(`#movie-${topRate.id}`, '🎟️ 예매율 1위', topRate.title, `${topRate.stats.rate.pct}% · ${String(topRate.stats.rate.basis || '').split('·').pop().trim()}`));
+    const soon = all.filter(m => m.rel > 0).sort((a, b) => a.rel - b.rel);
+    if (soon.length) { const same = soon.filter(m => m.rel === soon[0].rel).length; out.push(card(`#movie-${soon[0].id}`, '🗓️ 개봉 임박', soon[0].title, `D-${soon[0].rel}${same > 1 ? ` · 같은 날 ${same - 1}편 더` : ''}`)); }
+    const recent = [];
+    reviewDocs.forEach(d => Object.entries(d.films || {}).forEach(([fid, r]) => { if (r && (r.title || r.text)) { const m = all.find(x => x.id === fid); if (m) recent.push({ m, r }); } }));
+    recent.sort((a, b) => (b.r.at || 0) - (a.r.at || 0));
+    out.push(recent.length
+      ? card(`#reviews-${recent[0].m.id}`, `💬 최근 후기 · 전체 ${recent.length}개`, recent[0].r.title || cut(recent[0].r.text || '', 24), `${recent[0].m.title} · ★${recent[0].r.rating}`)
+      : card('#movies-reviews', '💬 최근 후기', '첫 후기를 남겨 보세요', '영화를 보고 리뷰를 써 주세요'));
+    const perkNow = all.reduce((s, m) => s + perksOf(m).map(p => perkInfo(m, p)).filter(x => x.status === 'now').length, 0);
+    out.push(card('#movies-perks', '🎁 지금 받을 수 있는 특전', `${perkNow}개`, '극장별 선착순 증정'));
+    return out.join('');
   }
   /* 첫 화면: 영화 / 콘서트에 마우스를 올리면 아래로 하위 항목이 펼쳐짐 (터치: 한 번 누르면 펼침, 두 번째에 이동) */
   let homeOpen = null, homeTimer = null;
@@ -986,6 +1053,7 @@
       homeOpen = kind;
     }
     sub.classList.add('open');
+    setMarquee(kind);
     $('home-wrap')?.classList.add('has-open');
     document.querySelectorAll('.choice2').forEach(c => { const on = c.dataset.home === kind; c.classList.toggle('hot', on); c.setAttribute('aria-expanded', String(on)); });
   }
@@ -994,6 +1062,7 @@
     const f = () => {
       homeOpen = null;
       $('home-sub')?.classList.remove('open');
+      setMarquee('mix');
       $('home-wrap')?.classList.remove('has-open');
       document.querySelectorAll('.choice2').forEach(c => { c.classList.remove('hot'); c.setAttribute('aria-expanded', 'false'); });
     };

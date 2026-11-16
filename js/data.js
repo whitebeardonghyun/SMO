@@ -576,3 +576,42 @@ window.SMO_STATS = {
   }
 };
 window.SMO_MOVIES.forEach(m => { if (window.SMO_STATS[m.id]) m.stats = window.SMO_STATS[m.id]; });
+
+// 콘서트: 포스터는 images/posters/<id>.jpg, 좌석 배치도는 images/seatmaps/<id>.jpg 처럼 넣고 poster / seatmap 칸에 경로를 적어 주세요.
+window.SMO_CONCERTS = [
+    { id: 'c1', title: '2026 DAY6 Special Concert 〈The Present〉', en: 'DAY6 · THE PRESENT', date: '2026-12-18', end: '2026-12-20',
+      when: '12.18(금) 19:00 · 12.19(토) 18:00 · 12.20(일) 17:00', venue: 'KSPO DOME (올림픽체조경기장)', city: '서울', genre: '밴드, K-POP',
+      price: '전석 154,000원', seats: [{ g: '전석', p: '154,000원', note: '360도 전 좌석 개방' }],
+      lineup: [{ name: '성진', role: '보컬 · 기타' }, { name: 'Young K', role: '베이스 · 보컬' }, { name: '원필', role: '키보드 · 보컬' }, { name: '도운', role: '드럼' }],
+      setlist: ['Welcome to the Show', '한 페이지가 될 수 있게', '예뻤어', 'HAPPY', 'Zombie', '행복했던 날들이었다', '녹아내려요', '놓아 놓아 놓아', 'Love me or Leave me', '좋아합니다', 'Congratulations'],
+      desc: 'DAY6가 연말에 KSPO DOME에서 여는 스페셜 콘서트예요. 무대를 가운데 두고 360도로 모든 좌석을 열어요. 팬클럽 선예매는 11/19(목) 20:00, 일반 예매는 11/20(금) 20:00에 NOL 티켓에서 열려요.',
+      book: 'https://nol.yanolja.com/ticket/products/26016335', bookName: 'NOL 티켓', src: 'https://www.topstarnews.net/news/articleView.html?idxno=16273727', c: ['#1B263B', '#E0A458'] },
+    { id: 'c2', title: '2026 조용필 & 위대한탄생 콘서트 – 서울', en: 'CHO YONG PIL & THE GREAT BIRTH', date: '2026-11-27', end: '2026-11-29',
+      when: '11.27(금) ~ 11.29(일) · 회차별 시작 시간은 예매처 공지', venue: 'KSPO DOME (올림픽체조경기장)', city: '서울', genre: '가요, 록',
+      price: '110,000–176,000원', seats: [{ g: 'VIP석', p: '176,000원' }, { g: 'R석', p: '165,000원' }, { g: 'S석', p: '143,000원' }, { g: 'A석', p: '110,000원' }],
+      lineup: [{ name: '조용필', role: '보컬' }, { name: '위대한탄생', role: '밴드' }],
+      setlist: ['여행을 떠나요', '단발머리', '모나리자', '고추잠자리', '창밖의 여자', '친구여', '킬리만자로의 표범', '그 겨울의 찻집', '꿈', '돌아와요 부산항에', '바운스', 'Hello'],
+      desc: '가왕 조용필이 밴드 위대한탄생과 함께 여는 단독 콘서트의 서울 공연이에요. 좌석 등급별 가격은 언론 보도 기준이에요.',
+      book: 'https://tickets.interpark.com/', bookName: 'NOL 인터파크 티켓', src: 'https://www.wikitree.co.kr/articles/1159979', c: ['#2B2D42', '#D90429'] },
+    { id: 'c3', title: '자우림 콘서트 〈MIDNIGHT EXPRESS 2026-2027〉', en: 'JAURIM · MIDNIGHT EXPRESS', date: '2026-12-18', end: '2026-12-20',
+      when: '12.18(금) ~ 12.20(일) · 회차별 시작 시간은 예매처 공지', venue: '올림픽공원 올림픽홀', city: '서울', genre: '록, 밴드',
+      price: '예매처 공지 확인', seats: [],
+      lineup: [{ name: '김윤아', role: '보컬' }, { name: '이선규', role: '기타' }, { name: '김진만', role: '베이스' }],
+      setlist: ['일탈', '하하하쏭', '매직 카펫 라이드', '스물다섯, 스물하나', '미안해 널 미워해', '팬이야', '샤이닝', '헤이 헤이 헤이', '영원히 영원히'],
+      desc: '자우림이 연말부터 새해까지 여는 투어의 서울 공연이에요. 서울 공연 뒤에 부산(12/25), 대전(2027.1.2), 대구(1.9)로 이어져요. 서울 티켓은 10/27 선예매, 10/28 일반 예매로 열렸어요.',
+      book: 'https://nol.yanolja.com/ticket', bookName: 'NOL 티켓', src: 'https://sports.khan.co.kr/en/article/202610240351007', c: ['#14213D', '#FCA311'] },
+    { id: 'c4', title: '2026 CRUSH CONCERT 〈CRUSH H♥UR〉', en: 'CRUSH H♥UR', date: '2026-12-25', end: '2026-12-26',
+      when: '12.25(금) · 12.26(토) · 회차별 시작 시간은 예매처 공지', venue: '올림픽공원 티켓링크 라이브 아레나', city: '서울', genre: 'R&B, 힙합',
+      price: '예매처 공지 확인', seats: [],
+      lineup: [{ name: '크러쉬', role: '보컬' }],
+      setlist: ['가끔', 'Oasis', '어떻게 지내', 'Beautiful', '잊어버리지마', '나빠', '놓아줘', 'Rush Hour', '자나깨나'],
+      desc: '크러쉬가 크리스마스에 여는 연말 단독 콘서트예요. 팬클럽 선예매는 11/19(목) 20:00, 일반 예매는 11/20(금) 20:00에 티켓링크에서 열려요.',
+      book: 'https://www.ticketlink.co.kr/', bookName: '티켓링크', src: 'https://www.topstarnews.net/news/articleView.html?idxno=16275692', c: ['#3A0CA3', '#F72585'] },
+    { id: 'c5', title: '2026 김나영 전국투어 콘서트 – 부산', en: 'KIM NA YOUNG TOUR · BUSAN', date: '2026-12-12',
+      when: '12.12(토) 18:00', venue: '소향씨어터 우리은행홀', city: '부산', genre: '발라드',
+      price: '예매처 공지 확인', seats: [],
+      lineup: [{ name: '김나영', role: '보컬' }],
+      setlist: ['솔직하게 말해서 나', '어땠을까', '그리고 헤어지다', '일기', '헤어진 우리가 지켜야 할 것들'],
+      desc: '김나영의 연말 전국투어 중 부산 공연이에요. 서울 공연(12/5–6)은 티켓링크, 부산·대구·광주 공연은 예스24 티켓과 NOL 티켓에서 예매해요.',
+      book: 'http://ticket.yes24.com/', bookName: '예스24 티켓', src: 'https://www.make2t.kr/2026/11/kim-nayoung-open-concert-2026-december-tour.html', c: ['#5E548E', '#E0B1CB'] }
+  ];
