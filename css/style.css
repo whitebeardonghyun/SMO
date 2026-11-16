@@ -412,4 +412,77 @@ footer.foot { display: flex; justify-content: space-between; gap: 16px; padding-
   .r { gap: 4px; }
   .editor label { padding-top: 0; }
 }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* =====================================================================
+   테마: 라이트(기본) / 다크 — 오른쪽 위 버튼으로 전환, 고른 값은 브라우저에 기억
+   ===================================================================== */
+:root {
+  --bg: #FFFFFF; --fg: #1D1D1F; --muted: #6E6E73; --dim: #C7C7CC; --line: #E5E5EA; --field: #F5F5F7; --danger: #D70015;
+  --text-soft: #3A3A3C; --trailer-bg: #E5E5EA; --hover-bg: #F2F2F7; --gold: #A15C00; --bar-top: #F2A900; --like: #D6336C;
+  --scrim: rgba(255, 255, 255, .6); --poster-shadow: 0 12px 28px rgba(0, 0, 0, .18);
+  color-scheme: light;
+}
+:root[data-smo-theme="dark"] {
+  --bg: #0E0E10; --fg: #F5F5F7; --muted: #A1A1A6; --dim: #48484A; --line: #2A2A2E; --field: #1A1A1D; --danger: #FF6B6B;
+  --text-soft: #D8D8DC; --trailer-bg: #0A0A0A; --hover-bg: #18181B; --gold: #FFD66B; --bar-top: #FFD66B; --like: #FF8FB1;
+  --scrim: rgba(0, 0, 0, .5); --poster-shadow: 0 12px 28px rgba(0, 0, 0, .6);
+  color-scheme: dark;
+}
+body { font-size: 14px; transition: background-color .3s ease, color .3s ease; }
+/* 포스터는 처음부터 원래 밝기로. 마우스를 올리면 살짝 떠오름 */
+.frame, .work:hover .frame { filter: none; }
+@media (hover: none) { .frame { filter: none; } }
+.work .frame { transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s; }
+.work:hover .frame, .work:focus-visible .frame { transform: translateY(-4px); box-shadow: var(--poster-shadow); }
+/* 어두운 배경 전제로 정해 뒀던 색들을 테마 색으로 */
+.syn-big, .cm p, .post .ex, .rv-card-body p { color: var(--text-soft); }
+.post .ex:hover { color: var(--fg); }
+.trailer { background: var(--trailer-bg); }
+.rv-cta:hover { background: var(--hover-bg); }
+.pk-why { color: var(--gold); }
+.st-ages li.top .st-bar i { background: var(--bar-top); }
+.rv-like { color: var(--like); }
+.pk-chip.dislike.on { border-color: var(--danger); color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, transparent); }
+.pk-check input { accent-color: var(--fg); }
+.scrim { background: var(--scrim); }
+.home2:hover .choice2, .home-wrap.has-open .choice2 { opacity: .3; }
+.home2 .choice2:hover, .home2 .choice2:focus-visible, .home-wrap .choice2.hot { opacity: 1; }
+.flyout-inner:has(.fly-col:hover) .fly-col:not(:hover) { opacity: .35; }
+/* 전환 버튼 (상단 왼쪽) */
+.theme-btn { grid-column: 1; grid-row: 1; justify-self: start; border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 13px; color: var(--muted); background: var(--bg); transition: border-color .2s, color .2s; white-space: nowrap; }
+.theme-btn:hover { border-color: var(--fg); color: var(--fg); }
+
+/* =====================================================================
+   첫 화면: 흐르는 포스터 띠 + 오늘의 SMO 소식
+   ===================================================================== */
+.home-wrap { position: relative; }
+.home-sub { position: absolute; left: 0; right: 0; top: 100%; z-index: 3; background: var(--bg); border-bottom: 1px solid var(--line); box-shadow: 0 24px 40px -24px rgba(0, 0, 0, .25); }
+.marquee { margin-top: 8px; }
+.mq-stage { display: grid; }
+.mq-set { grid-area: 1 / 1; display: grid; gap: 12px; align-content: start; opacity: 0; transition: opacity .45s ease; pointer-events: none; }
+.mq-set.on { opacity: 1; pointer-events: auto; }
+.mq-row { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); }
+.mq-track { display: flex; width: max-content; animation: mq var(--dur, 40s) linear infinite; }
+.mq-track.rev { animation-direction: reverse; }
+.mq-row:hover .mq-track { animation-play-state: paused; }
+@keyframes mq { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.mq-item { flex: 0 0 auto; width: 96px; margin-right: 10px; }
+.mq-item .frame, .mq-concert .frame { filter: none !important; border-radius: 6px; }
+.mq-item .frame .ft { font-size: 11px; }
+.mq-item .frame .fe, .mq-concert .frame .fe { display: none; }
+.mq-item:hover .frame { transform: translateY(-3px); box-shadow: var(--poster-shadow); }
+.mq-concert { flex: 0 0 auto; width: 260px; margin-right: 10px; display: grid; grid-template-columns: 60px minmax(0, 1fr); gap: 12px; align-items: center; padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--field); transition: border-color .2s; }
+.mq-concert:hover { border-color: var(--fg); }
+.mq-concert .frame .ft { font-size: 9px; }
+.mq-ci { display: grid; gap: 2px; min-width: 0; font-size: 12px; color: var(--muted); }
+.mq-ci b { color: var(--fg); font-size: 14px; font-weight: 600; letter-spacing: -0.02em; }
+.mq-ci span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.home-news { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 12px; margin-top: 28px; padding-bottom: 48px; }
+.hn-card { display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--field); min-width: 0; transition: border-color .2s, transform .2s; }
+.hn-card:hover { border-color: var(--fg); transform: translateY(-2px); }
+.hn-label { font-size: 12px; color: var(--muted); }
+.hn-main { font-size: 17px; font-weight: 600; letter-spacing: -0.02em; }
+.hn-sub { font-size: 12px; color: var(--muted); }
+.home2 { margin-top: clamp(16px, 4vh, 48px) !important; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } .mq-track { animation: none; } .mq-row { overflow-x: auto; } }
