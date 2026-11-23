@@ -478,6 +478,94 @@ window.SMO_MOVIES.push(
 //  - img 는 사용 허락을 받은 사진을 images/perks 폴더에 넣고 경로를 적으면, 썸네일과 원본 크기 보기가 생겨요.
 // ---------------------------------------------------------------
 const TS = 'https://www.topstarnews.net/news/articleView.html?idxno=';
+// 개봉 예정작 (TMDB에서 2026-11-23에 가져옴)
+window.SMO_MOVIES.push(
+  {
+    id: "mvt1765072", title: "유 캔 씨 에브리씽", en: "You Can See Everything", date: "2026-12-09", rate: "", run: 175,
+    genre: "다큐멘터리", dir: "네이선 필더, 랜스 오펜하임",
+    cast: [{ name: "엘리자베스 홈즈", role: "Self" }, { name: "네이선 필더", role: "Self" }, { name: "Billy Evans", role: "Self" }, { name: "아만다 사이프리드", role: "Self / Elizabeth Holmes" }],
+    syn: "실리콘밸리의 혁신적인 기업가에서 전 세계를 속인 희대의 사기꾼으로 전락한 엘리자베스 홈즈가 교도소 입소를 34일 앞두고 다큐멘터리 제작진을 집으로 초대하면서 시작된 3년간의 기록을 담은 다큐멘터리",
+    trailer: "https://www.youtube.com/watch?v=8mTw_XhJHvk", poster: "images/posters/mvt1765072.jpg"
+  },
+  {
+    id: "mvt791523", title: "와일드우드", en: "Wildwood", date: "2027-01-06", rate: "12", run: 131,
+    genre: "애니메이션, 어드벤처, 드라마, 판타지", dir: "트래비스 나이트",
+    cast: [{ name: "페이턴 엘리자베스 리", role: "Prue McKeel" }, { name: "제이컵 트람블레이", role: "Curtis Mehlberg" }, { name: "캐리 멀리건", role: "Alexandra" }, { name: "마허샬라 알리", role: "Brenden" }],
+    syn: "어린 남동생이 까마귀 떼에게 납치되자, 당차고 고집 센 십 대 소녀 프루는 동생을 되찾기 위해 필사적인 구출 작전에 나선다. 그녀가 향한 곳은 오리건주 포틀랜드 너머에 숨겨진 금단의 숲, ‘와일드우드’. 이곳은 말을 하는 동물들과 무법자들, 신비로운 존재들이 살아가는 낯선 세계다. 프루는 어딘가 어설프지만 충직한 친구 커티스와 함께 숲속으로 들어가고, 동생을 찾아 헤매는 과정에서 서로 대립하는 여러 세력과 마주한다. 한편, 어린 아들을 잃은 슬픔과 집착에 사로잡힌 마녀 알렉산드라는 아들을 되찾기 위해 숲 전체를 위협하는 위험한 계획을 추진하고 있다. 점차 와일드우드의 운명을 둘러싼 거대한 갈등에 휘말린 프루와 커티스. 동생을 구하기 위한 여정은 숲의 미래를 지키기 위한 모험으로 확대되고, 프루는 그 과정에서 자신도 미처 알지 못했던 용기와 내면의 힘을 발견하게 된다. 소중한 가족과 위기에 처한 와일드우드를 지키기 위해, 프루는 자신의 모든 것을 건 선택을 해야 한다.",
+    trailer: "https://www.youtube.com/watch?v=bJQGtSeLPII", poster: "images/posters/mvt791523.jpg"
+  },
+  {
+    id: "mvt1241052", title: "마우스", en: "Mouse", date: "2026-12-16", rate: "all", run: 121,
+    genre: "드라마, 코미디", dir: "알렉스 톰슨, 켈리 오설리번",
+    cast: [{ name: "소피 오코네도", role: "Helen Bell" }, { name: "캐서린 말렌 쿠퍼러", role: "Minnie Dunn" }, { name: "클로에 콜맨", role: "Callie Bell" }, { name: "데이비드 하이드 피어스", role: "Mr. Murdaugh" }],
+    syn: "고등학교 졸업 반을 앞둔 여름의 시작, 캘리와 미니의 관계는 갑작스러운 변화를 맞이한다. 카리스마 넘치는 단짝 친구를 잃고 방향을 상실한 미니는 캘리의 어머니와 복잡미묘한 우정을 쌓기 시작한다.",
+    trailer: "https://www.youtube.com/watch?v=53wB4SCjRtY", poster: "images/posters/mvt1241052.jpg"
+  },
+  {
+    id: "mvt950028", title: "완벽한 초대", en: "The Invite", date: "2026-12-02", rate: "19", run: 108,
+    genre: "코미디, 드라마, 로맨스", dir: "올리비아 와일드",
+    cast: [{ name: "올리비아 와일드", role: "Angela" }, { name: "세스 로건", role: "Joe" }, { name: "페넬로페 크루스", role: "Piña" }, { name: "에드워드 노튼", role: "Hawk" }],
+    syn: "대화 없는 결혼 생활에 무뎌진 부부 ‘앤젤라’와 ‘조’. 어느 날 윗집 커플 ‘피냐’와 ‘호크’가 흘려보낸 수상한 소음이 이들 사이에 흐르던 침묵을 깨운다. 궁금증을 참을 수 없는 ‘앤젤라’와 불만을 숨길 수 없는 ‘조’는 이런저런 핑계로 윗집 커플을 저녁 식사에 초대한다. 그러나 평범함을 거부한 대화가 오가면서 인생 최대의 아찔한 순간이 펼쳐지는데… 끝나기 직전의 우리, 선 넘어버린 그들. “마지막으로 […]한 게 언제예요?”",
+    trailer: "https://www.youtube.com/watch?v=yPEWeZvRu8Q", poster: "images/posters/mvt950028.jpg"
+  },
+  {
+    id: "mvt1457866", title: "클리프 부스의 더 뻔뻔한 모험", en: "THE FURTHER MIS-ADVENTURES OF CLIFF BOOTH", date: "2026-11-25", rate: "", run: 141,
+    genre: "코미디, 드라마, 스릴러", dir: "데이비드 핀처",
+    cast: [{ name: "브래드 피트", role: "Cliff Booth" }, { name: "엘리자베스 데비키", role: "Karen Crosby" }, { name: "스콧 칸", role: "Charlie Peters" }, { name: "야히아 압둘 마틴 2세", role: "Roderick \u0027Hot Rod\u0027 Harrison" }],
+    syn: "동화 같은 이야기는 이제 끝났다. 로스앤젤레스는 더 이상 예전처럼 히피를 처치하는 스턴트맨을 필요로 하지 않는다. 하지만 할리우드에는 언제나 문제가 생기는 법. 그리고 그 문제들은 클리프처럼 독특하고 (때로는 법의 테두리를 넘나드는) 능력을 지닌 자만이 해결할 수 있다. 생계를 위해 바텐더나 영사 기사로 일하는 시간 외에, 클리프 부스는 해결사로 활동하며 할리우드의 거물들, 때때로 그다지 떳떳하지 못한 이들을 위해 뒷수습에 나선다. 탤런트 에이전트 캐런 크로스비(엘리자베스 데비키)에게서 전화를 받은 클리프는 호기심이 동한다. 캐런은 직접 스턴트를 소화하는 것으로 유명한 TV 슈퍼스타 찰리 피터스(스콧 칸)를 대신해 연락한 것. 찰리 주변 인물들을 만나본 클리프는 더욱 구미가 당기고 호기심을 느낀다. 뭔가 알고 있는 듯한 찰리의 아내 토니(칼라 구지노)부터 프로 미식축구 챔피언에서 스크린 스타로 변신한 로더릭 \u0027핫 로드\u0027 해리슨(야히아 압둘마틴 2세), 도시 곳곳에서 소동을 일으키는 정체불명의 갱스터 베르두스코 형제(맷 그루브와 JB 타데나)까지, 흥미롭지 않을 수 없다. 이제 한때 동화였던 이야기는 범죄극으로 변모한다. 폭력과 야망, 욕망을 한데 섞은 칵테일 같은 이야기. 오직 LA에서만 맛볼 수 있는 일이다.",
+    trailer: "https://www.youtube.com/watch?v=F1fSF9fYYOc", poster: "images/posters/mvt1457866.jpg"
+  },
+  {
+    id: "mvt1214931", title: "뉘른베르크", en: "Nuremberg", date: "2026-12-02", rate: "15", run: 149,
+    genre: "역사, 드라마", dir: "제임스 밴더빌트",
+    cast: [{ name: "라미 말렉", role: "Douglas Kelley" }, { name: "러셀 크로우", role: "Hermann Göring" }, { name: "마이클 섀넌", role: "Justice Robert H. Jackson" }, { name: "레오 우달", role: "Sergeant Howie Triest" }],
+    syn: "제2차 세계대전 종전 직후인 1945년, 나치 전범들을 단죄하기 위한 사상 초유의 국제군사재판이 독일 뉘른베르크에서 개최된다. 재판에 앞서 미 육군 군의관이자 정신과의사인 더글러스 켈리 소령은 피고인들이 재판을 받을 정신적 능력이 있는지 평가하고, 그들이 저지른 악행의 근원을 파악하라는 임무를 부여받는다. 켈리 소령은 나치 서열 2위이자 히틀러의 후계자였던 헤르만 괴링과 마주하고, 일대일 면담을 거듭하며 치열한 심리전을 펼치게 된다. 괴링은 뛰어난 달변과 카리스마로 켈리를 심리적으로 흔들려 하고, 켈리는 괴물 같은 악인이 특별한 광신자가 아닌 지극히 평범한 인간 내면의 뒤틀린 욕망에서 비롯되었다는 서늘한 진실에 다가선다. 한편 미국 수석 검사 로버트 H. 잭슨은 인류 역사상 가장 중요한 법정 투쟁을 준비하는데… 정의와 악의 경계, 인간 본성의 심연을 마주한 두 남자의 팽팽한 지적 대결이 펼쳐진다.",
+    trailer: "https://www.youtube.com/watch?v=XkSwhPwZw3w", poster: "images/posters/mvt1214931.jpg"
+  },
+  {
+    id: "mvt1598766", title: "극장판 짱구는 못말려: 기기괴괴! 나의 요괴 바캉스", en: "クレヨンしんちゃん 奇々怪々！オラの妖怪バケ～ション", date: "2026-12-03", rate: "all", run: 101,
+    genre: "어드벤처, 애니메이션, 코미디, 가족, 판타지", dir: "와타나베 마사키",
+    cast: [{ name: "코바야시 유미코", role: "Shinnosuke Nohara" }, { name: "나라하시 미키", role: "Misae Nohara" }, { name: "모리카와 토시유키", role: "Hiroshi Nohara" }, { name: "코오로기 사토미", role: "Himawari Nohara" }],
+    syn: "전국 각지에서 기묘한 현상이 목격되며 세상이 떠들썩한 가운데, 방학을 맞은 짱구 가족은 아빠의 고향, 친할아버지 집으로 휴가를 떠난다. 그런데 시골집에서의 둘째 날 아침, 집안 곳곳에서 수상한 초대장이 발견된다. ‘여름방학 마을에서는 초코비 무한 리필, 수박 공짜’ 초코비 무한 리필에 대흥분한 짱구는 엄마, 아빠, 짱아, 흰둥이와 함께 깊은 산속의 여름방학 마을을 찾아간다. 하지만 이곳은 인간의 출입이 금지된 ‘요괴 나라’로 통하는 입구! 치안 유지대 가파라파에게 인간이라는 사실을 들킨 엄마 봉미선과 아빠 신영식은 엉덩이 구슬을 뺏겨 요괴가 되어버린다. 그리고 짱구와 짱아마저 요괴가 될 위기에 놓이는데! 요괴로 변해 인간의 기억을 서서히 잃어가는 엄마, 아빠! 짱구는 엄마, 아빠의 엉덩이 구슬을 되찾고 무사히 집으로 돌아갈 수 있을까?!",
+    trailer: "https://www.youtube.com/watch?v=1PlABXle2PA", poster: "images/posters/mvt1598766.jpg"
+  },
+  {
+    id: "mvt1421903", title: "웨어울프", en: "Werwulf", date: "2027-01-13", rate: "19", run: 120,
+    genre: "공포, 판타지", dir: "로버트 에거스",
+    cast: [{ name: "에런 테일러존슨", role: "Man" }, { name: "릴리로즈 뎁", role: "Woman" }, { name: "윌렘 대포", role: "Old Hunter" }, { name: "보디 래 브레스나크", role: "Daughter" }],
+    syn: "제목 Werwulf는 현대 영어 단어 werewolf(늑대인간)를 일부러 고어(古語)식으로 표기한 것이다. *wer-*는 고대 영어에서 \"사람(man)\"을 뜻하고, 여기에 wulf(늑대)가 붙어 \"사람-늑대\", 즉 늑대인간을 의미한다. 이 작품은 영어권 영화이고 시대극 대사도 중세 영어 기반이므로, 발음은 영어식 /w/ 소리를 따라 \"웨어울프\"가 된다. 반면 \"베어볼프\"는 독일어 Werwolf의 발음(대략 [ˈveːɐ̯vɔlf])에 가깝다. 독일어에서는 철자 w가 /v/로 소리 나기 때문에 \"베어볼프\"처럼 들리는 것인데, 이 영화는 독일어 작품이 아니므로 여기에는 해당하지 않는다. 굳이 고대 영어 원음까지 따진다면 wer의 자음은 여전히 /w/ 계열이라 \"베—\"로 시작하지는 않는다.",
+    trailer: "https://www.youtube.com/watch?v=cmjpadVj-Vk", poster: "images/posters/mvt1421903.jpg"
+  },
+  {
+    id: "mvt1294380", title: "실연당한 사람들을 위한 일곱 시 조찬모임", en: "실연당한 사람들을 위한 일곱 시 조찬모임", date: "2026-12-30", rate: "12", run: 108,
+    genre: "드라마, 로맨스", dir: "임선애",
+    cast: [{ name: "수지", role: "Yoon Sa-gang" }, { name: "이진욱", role: "Lee Ji-hoon" }, { name: "유지태", role: "Jeong-su" }, { name: "금새록", role: "Hyeon-jung" }],
+    syn: "레스토랑에 모인 사람들이 실연의 기념품을 서로 교환하며 각자의 사연을 털어놓고, 소통하고, 상처를 치유하면서 새로운 관계들을 만들어 나가는 과정을 그린다.",
+    trailer: "https://www.youtube.com/watch?v=N3dRcwfrIY8", poster: "images/posters/mvt1294380.jpg"
+  },
+  {
+    id: "mvt1317410", title: "슬픈 열대", en: "슬픈 열대", date: "2026-11-25", rate: "19", run: 108,
+    genre: "액션, 스릴러, 범죄", dir: "박훈정",
+    cast: [{ name: "이신영", role: "" }, { name: "박유림", role: "" }, { name: "김명민", role: "Master" }, { name: "박해수", role: "" }],
+    syn: "버려진 아이들을 킬러로 키워낸 조직 ‘슬픈 열대’의 절대자 ‘사부’가 살해당했다. 정글을 지배하던 공포의 대상이 사라지자, 형제처럼 자란 조직원들 사이에 균열과 의심이 걷잡을 수 없이 번져가고 그 틈을 타 오랜 동업자들마저 그의 빈자리를 차지하기 위해 움직이기 시작하는데...",
+    trailer: "https://www.youtube.com/watch?v=LTxT_6ECIK8", poster: "images/posters/mvt1317410.jpg"
+  },
+  {
+    id: "mvt1452168", title: "베헤모스!", en: "Behemoth!", date: "2026-12-02", rate: "", run: 127,
+    genre: "음악, 드라마", dir: "토니 길로이",
+    cast: [{ name: "페드로 파스칼", role: "Alex Serian" }, { name: "올리비아 와일드", role: "Carol Spedding" }, { name: "에바 빅터", role: "Nadia Hynes" }, { name: "윌 아넷", role: "Andy Serian" }],
+    syn: "20년간 교향악단에서 연주해 온 천재 첼리스트 ‘알렉스’. 오랜 타지 생활을 정리하고 고향 로스앤젤레스로 돌아온 그는 아직 공개되지 않은 할리우드 영화 프로젝트 ‘베헤모스!’의 음악 녹음에 합류한다. 연주가 시작되는 순간, 수면 아래 묻어둔 과거와 풀리지 않은 의문들이 걷잡을 수 없이 밀려나오며 그의 삶을 송두리째 뒤흔드는데…",
+    trailer: "https://www.youtube.com/watch?v=PX662z1txDQ", poster: "images/posters/mvt1452168.jpg"
+  },
+  {
+    id: "mvt940009", title: "레이 건", en: "Ray Gunn", date: "2026-12-02", rate: "12", run: 120,
+    genre: "애니메이션, SF, 범죄, 미스터리", dir: "브래드 버드",
+    cast: [{ name: "샘 록웰", role: "Raymond Gunn" }, { name: "스칼렛 요한슨", role: "Venus Nova" }, { name: "톰 웨이츠", role: "Eye-Ra" }, { name: "맷 베리", role: "Francis \u0027Slugsy\u0027 Xavier" }],
+    syn: "1939년을 배경으로 한 대체 미래의 거대 도시 메트로피아. 기계와 로봇이 탐정업을 주도하는 시대에 보기 드문 인간 사립탐정 레이 건은 외계인 조수 아이라와 함께 인기 스타 비너스 노바가 얽힌 의문의 살인 사건을 파헤친다.",
+    trailer: "https://www.youtube.com/watch?v=y4WWxbasOPA", poster: "images/posters/mvt940009.jpg"
+  }
+);
+
 window.SMO_PERKS = {
   // 극장판 치이카와 인어 섬의 비밀
   "mvmwakt0bnl6z5": [
@@ -550,7 +638,16 @@ window.SMO_MOVIES.forEach(m => { if (window.SMO_PERKS[m.id]) m.perks = window.SM
 // ---------------------------------------------------------------
 const EC = 'https://www.econovill.com/news/articleView.html?idxno=';
 window.SMO_STATS = {
-  // 명탐정코난 : 30호 살인 사건
+  // 하트 오브 비스트 (이코노믹리뷰 2026-11-03)
+  "mvmwakx9e1idzq": {
+    gender: { f: 44, m: 56, basis: "CGV 예매 기준 · 11/2 무렵", link: EC + "755763" },
+    ages: { list: [["10대", 2], ["20대", 15], ["30대", 21], ["40대", 30], ["50대", 22]], basis: "CGV 예매 기준 · 11/2 무렵", link: EC + "755763" }
+  },
+  // 모자 쓴 고양이 (이코노믹리뷰 2026-11-10)
+  "mvclcatinhat": {
+    gender: { f: 61, m: 39, basis: "CGV 예매 기준 · 11/9 무렵", link: EC + "756583" },
+    ages: { list: [["30대", 37], ["40대", 53], ["기타", 10]], basis: "CGV 예매 기준 · 11/9 무렵", link: EC + "756583" }
+  },  // 명탐정코난 : 30호 살인 사건
   "mvmwaloqmsn1as": {
     gender: { f: 68, m: 32, basis: "CGV 예매 기준 · 11/8 무렵", link: EC + "756431" },
     ages: { list: [["10대", 11], ["20대", 52], ["30대", 16], ["40대", 14], ["50대 이상", 6]], basis: "CGV 예매 기준 · 11/8 무렵", link: EC + "756431" }
@@ -615,3 +712,29 @@ window.SMO_CONCERTS = [
       desc: '김나영의 연말 전국투어 중 부산 공연이에요. 서울 공연(12/5–6)은 티켓링크, 부산·대구·광주 공연은 예스24 티켓과 NOL 티켓에서 예매해요.',
       book: 'http://ticket.yes24.com/', bookName: '예스24 티켓', src: 'https://www.make2t.kr/2026/11/kim-nayoung-open-concert-2026-december-tour.html', c: ['#5E548E', '#E0B1CB'] }
   ];
+
+// 추천 > 취향 고르기 영화(흥행작 20편)의 포스터. images/seeds/ 에 파일을 넣고 아래 줄의 // 를 지우면 카드에 작게 보여요.
+// s01 범죄도시 2 · s02 베테랑 · s03 탑건: 매버릭 · s04 극한직업 · s05 엑시트 · s06 7번방의 선물 · s07 서울의 봄 · s08 명량 · s09 기생충 · s10 파묘
+// s11 부산행 · s12 어벤져스: 엔드게임 · s13 인터스텔라 · s14 신과함께-죄와 벌 · s15 겨울왕국 2 · s16 엘리멘탈 · s17 스즈메의 문단속 · s18 보헤미안 랩소디 · s19 라라랜드 · s20 어바웃 타임
+window.SMO_SEED_POSTERS = {   // TMDB에서 받은 포스터
+  s02: 'images/seeds/s02.jpg',
+  s03: 'images/seeds/s03.jpg',
+  s05: 'images/seeds/s05.jpg',
+  s08: 'images/seeds/s08.jpg',
+  s11: 'images/seeds/s11.jpg',
+  s14: 'images/seeds/s14.jpg',
+  s15: 'images/seeds/s15.jpg',
+  s17: 'images/seeds/s17.jpg',
+  s18: 'images/seeds/s18.jpg',
+  s20: 'images/seeds/s20.jpg',
+  s01: 'images/seeds/s01.jpg',
+  s19: 'images/seeds/s19.jpg',
+  s04: 'images/seeds/s04.jpg',
+  s09: 'images/seeds/s09.jpg',
+  s07: 'images/seeds/s07.jpg',
+  s12: 'images/seeds/s12.jpg',
+  s10: 'images/seeds/s10.jpg',
+  s16: 'images/seeds/s16.jpg',
+  s06: 'images/seeds/s06.jpg',
+  s13: 'images/seeds/s13.jpg',
+};

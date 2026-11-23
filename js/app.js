@@ -78,7 +78,7 @@
   /* ---------- 이미지 ---------- */
   const rateLabel = (r) => r === 'all' ? '전체관람가' : r === '19' ? '청소년관람불가' : `${r}세 이상 관람가`;
   function seeded(s) { let h = 0; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return () => ((h = (h * 1664525 + 1013904223) >>> 0) / 4294967296); }
-  const posterSrc = (m) => m.poster || (m.posterId ? '/_blob/' + m.posterId : '');
+  const posterSrc = (m) => m.poster || (m.posterId ? '/_blob/' + m.posterId : '') || (m.relDate ? tmdbPoster(m) : '');   // 직접 넣은 포스터 → 없으면 TMDB
   function frame(item, kind, n, opts = {}) {
     const src = opts.src || posterSrc(item);
     if (src) {
@@ -155,14 +155,7 @@
     const admin = isAdmin && !m.example ? `<div class="admin-bar"><a class="link" href="#edit-${m.id}">수정</a>
       ${confirmDelMovie === m.id ? `<span class="muted">이 영화와 포스터를 삭제할까요?</span><button class="link danger" data-movie-act="del-yes">삭제</button><button class="link" data-movie-act="del-no">취소</button>`
         : `<button class="link danger" data-movie-act="del">삭제</button>`}</div>` : '';
-    return `<div class="detail-top">
-        <div><h1 class="fit" data-min="18">${esc(m.title)}</h1><div class="sub">${m.en ? esc(m.en) + ' · ' : ''}${soon ? `개봉 예정 D-${m.rel}` : '상영중'}${m.example ? ' · 예시' : ''}</div>${admin}${soon ? '<div id="hype-box"></div>' : '<div id="rating-box"></div>'}</div>
-        <div class="detail-poster">${frame(m, 'poster', 1)}</div>
-      </div>
-
-      <div class="group-label"><span>정보</span><span>01</span></div>
-      <div class="rows">
-        <div class="r"><span>개봉일</span><span>${fmtDate(m.relDate)}${soon ? ` · D-${m.rel}` : ''}</span></div>
+    const rowsHTML = `        <div class="r"><span>개봉일</span><span>${fmtDate(m.relDate)}${soon ? ` · D-${m.rel}` : ''}</span></div>
         ${m.genre ? `<div class="r"><span>장르</span><span>${esc(m.genre)}</span></div>` : ''}
         ${m.rate || m.run ? `<div class="r"><span>등급 / 시간</span><span>${m.rate ? rateLabel(m.rate) : ''}${m.rate && m.run ? ' · ' : ''}${m.run ? m.run + '분' : ''}</span></div>` : ''}
         ${m.dir ? `<div class="r"><span>감독</span><span>${esc(m.dir)}</span></div>` : ''}
@@ -172,12 +165,19 @@
           <a class="link" href="https://www.cgv.co.kr/" target="_blank" rel="noopener">CGV ↗</a>
           <a class="link" href="https://www.lottecinema.co.kr/" target="_blank" rel="noopener">롯데시네마 ↗</a>
           <a class="link" href="https://www.megabox.co.kr/" target="_blank" rel="noopener">메가박스 ↗</a></span></div>`}
+`;
+    return `<div class="detail-top">
+        <div><h1 class="fit" data-min="18">${esc(m.title)}</h1><div class="sub">${m.en ? esc(m.en) + ' · ' : ''}${soon ? `개봉 예정 D-${m.rel}` : '상영중'}${m.example ? ' · 예시' : ''}</div>${admin}${soon ? '<div id="hype-box"></div>' : '<div id="rating-box"></div>'}</div>
+        <div class="detail-poster">${frame(m, 'poster', 1)}</div>
       </div>
 
-      ${m.stats ? `<div class="group-label"><span>예매 현황</span><span>📊</span></div>${statsHTML(m)}` : ''}
+      <div class="info-split">
+          <div class="info-col"><div class="group-label"><span>정보</span><span>01</span></div><div class="rows rows-tight">${rowsHTML}</div></div>
+          <div class="side-col">${m.stats ? `<div class="group-label"><span>예매 현황</span><span>📊</span></div>${statsHTML(m)}` : `<div class="group-label"><span>예고편</span><span>02</span></div>${trailerBlock(m)}`}</div>
+        </div>   <!-- 왼쪽 정보 + 오른쪽 예매 현황(개봉 후 예매 정보가 생기면) · 없으면 예고편 -->
 
-      <div class="tr-rv">
-        <div class="tr-col"><div class="group-label"><span>예고편</span><span>02</span></div>${trailerBlock(m)}</div>
+      <div class="tr-rv${!m.stats ? ' solo' : ''}">
+        ${!m.stats ? '' : `<div class="tr-col"><div class="group-label"><span>예고편</span><span>02</span></div>${trailerBlock(m)}</div>`}
         <div class="rv-col"><div class="group-label"><span>리뷰</span><span>03</span></div>
           ${soon ? `<div class="note">리뷰는 개봉 후에 남길 수 있어요. 개봉을 기다린다면 위의 🍿 기대돼요를 눌러 주세요.</div>` : `<section id="review-summary"></section>`}</div>
       </div>
@@ -217,6 +217,8 @@
           <select id="f-rate">${[['','등급 미정'],['all','전체관람가'],['12','12세 이상'],['15','15세 이상'],['19','청소년관람불가']].map(([k,l]) => `<option value="${k}" ${(v.rate || '') === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
           <input type="number" id="f-run" min="1" max="600" placeholder="분" value="${esc(v.run)}"></div></div>
         <div class="r"><label for="f-genre">장르</label><input type="text" id="f-genre" maxlength="40" placeholder="예: 드라마, 스릴러" value="${esc(v.genre)}"></div>
+        <div class="r"><label for="f-mood">분위기 태그</label><div><input type="text" id="f-mood" maxlength="80" placeholder="예: 긴장감, 반전" value="${esc((v.mood || []).join(', '))}"><div class="hint">추천에 쓰여요. 쉼표로 나눠 적어 주세요. 쓸 수 있는 태그: ${MOODS.join(', ')}</div></div></div>
+        <div class="r"><label for="f-pitch">추천 한마디</label><div><input type="text" id="f-pitch" maxlength="140" placeholder="예: 〈엔드게임〉 이후 7년 만의 어벤져스 정식 후속작이에요." value="${esc(v.pitch || '')}"><div class="hint">추천 화면에서 이 영화를 왜 볼 만한지 알려 주는 배경 설명이에요.</div></div></div>
         <div class="r"><label for="f-dir">감독</label><input type="text" id="f-dir" maxlength="60" value="${esc(v.dir)}"></div>
         <div class="r"><label for="f-cast">출연</label><div><textarea id="f-cast" rows="4" placeholder="이름 / 배역&#10;예: 송강호 / 기택">${esc(castText)}</textarea><div class="hint">한 줄에 한 명씩, ‘이름 / 배역’으로 적어 주세요. 배역은 생략해도 돼요.</div></div></div>
         <div class="r"><label for="f-syn">시놉시스</label><textarea id="f-syn" rows="5" maxlength="1500">${esc(v.syn)}</textarea></div>
@@ -246,6 +248,8 @@
     const body = {
       title, en: $('f-en').value.trim(), date, rate: $('f-rate').value, run: Math.max(0, parseInt($('f-run').value, 10) || 0) || '',
       genre: $('f-genre').value.trim(), dir: $('f-dir').value.trim(), cast, syn: $('f-syn').value.trim(),
+      pitch: ($('f-pitch')?.value || '').trim().slice(0, 140),
+      mood: [...new Set(($('f-mood')?.value || '').split(/[,·]+/).map(s => s.trim()).filter(s => MOODS.includes(s)))],
       trailer: tid ? ytUrl(tid) : '', perks: ($('f-perks')?.value || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 10).map(t => {
         const old = existing ? perksOf(existing).find(p => p.text === t) : null;   // 글을 그대로 두면 출처 링크·사진도 유지
         return old && (old.link || old.img) ? { text: t, link: old.link || '', img: old.img || '' } : t;
@@ -601,7 +605,7 @@
   // 👍/👎: 직접 고른 값이 없으면(예전 리뷰) 별점 3점 이상을 👍로 봄
   // 추천: 각 사람의 reviews/<id> 문서 안 likes 맵에 "작성자id~영화id": true 로 저장
   const likeKey = (uid, filmId) => uid + '~' + filmId;
-  const myDoc = () => reviewDocs.find(d => d.uid === myId) || { films: {}, likes: {}, comments: {}, hype: {}, seats: {} };
+  const myDoc = () => reviewDocs.find(d => d.uid === myId) || { films: {}, likes: {}, comments: {}, hype: {}, seats: {}, taste: {} };
   // 기대돼요: 각 사람의 reviews/<id> 문서 안 hype 맵에 "영화id": true
   const hypeCount = (filmId) => reviewDocs.filter(d => d.hype && d.hype[filmId]).length;
   const myHype = (filmId) => !!(myDoc().hype || {})[filmId];
@@ -618,7 +622,7 @@
   }
   const myLikes = () => myDoc().likes || {};
   const likeCount = (uid, filmId) => { const k = likeKey(uid, filmId); return reviewDocs.filter(d => d.likes && d.likes[k]).length; };
-  const docBody = (d, patch) => { const b = { films: d?.films || {}, likes: d?.likes || {}, comments: d?.comments || {}, hype: d?.hype || {} }; if (d?.nick) b.nick = d.nick; if (d?.seats && Object.keys(d.seats).length) b.seats = d.seats; /* 좌석 후기가 있을 때만 보냄 (예전 보안 규칙에서도 영화 리뷰는 저장되도록) */ return { ...b, ...patch }; };
+  const docBody = (d, patch) => { const b = { films: d?.films || {}, likes: d?.likes || {}, comments: d?.comments || {}, hype: d?.hype || {} }; if (d?.nick) b.nick = d.nick; if (d?.seats && Object.keys(d.seats).length) b.seats = d.seats; if (d?.taste && Object.keys(d.taste).length) b.taste = d.taste; /* 좌석 후기가 있을 때만 보냄 (예전 보안 규칙에서도 영화 리뷰는 저장되도록) */ return { ...b, ...patch }; };
   let useNick = false;   // GitHub 버전: 이름 대신 닉네임을 써요
   const savedNick = () => { try { return localStorage.getItem('smo.nick') || ''; } catch { return ''; } };
   const nickHTML = () => useNick ? `<input type="text" id="rv-nick" class="rv-title" maxlength="20" placeholder="닉네임 (다른 사람에게 보이는 이름, 20자까지)" value="${esc(form.nick || myDoc().nick || savedNick())}">` : '';
@@ -1043,7 +1047,7 @@
       render(true);
     }, () => { movieState = 'off'; render(true); });
     db.collection('reviews').onSnapshot(snap => {
-      reviewDocs = snap.docs.map(d => { const x = d.data() || {}; return { uid: d.id, films: x.films || {}, likes: x.likes || {}, comments: x.comments || {}, hype: x.hype || {}, seats: x.seats || {}, nick: x.nick || '' }; });
+      reviewDocs = snap.docs.map(d => { const x = d.data() || {}; return { uid: d.id, films: x.films || {}, likes: x.likes || {}, comments: x.comments || {}, hype: x.hype || {}, seats: x.seats || {}, taste: x.taste || {}, nick: x.nick || '' }; });
       const wasReady = storeState === 'ready';
       storeState = 'ready';
       const r = currentRoute();
@@ -1392,77 +1396,475 @@
     if (b) { revSort = b.dataset.rsort; const y = window.scrollY; render(); window.scrollTo(0, y); }
   });
 
-  /* ---------- 영화 추천: 좋아하는 장르(여러 개) 고르기 + 싫은 장르 빼기 ---------- */
-  const GENRE_SAME = { '모험': '어드벤처', '생존': '서바이벌', '추리': '미스터리', '공연 실황': '공연', '음악': '공연' };   // 같은 뜻의 장르는 하나로
-  const genresOf = (m) => [...new Set(String(m.genre || '').split(/[,·/]+/).map(s => s.trim()).filter(Boolean).map(g => GENRE_SAME[g] || g))];
-  const PICK_KEY = 'smo.pick.v1';
-  const pick = (() => {
-    let s = {};
-    try { s = JSON.parse(localStorage.getItem(PICK_KEY)) || {}; } catch {}
-    return { like: new Set(s.like || []), dislike: new Set(s.dislike || []), soon: !!s.soon };
-  })();
-  const savePick = () => { try { localStorage.setItem(PICK_KEY, JSON.stringify({ like: [...pick.like], dislike: [...pick.dislike], soon: pick.soon })); } catch {} };
-  function allGenres(all) {
-    const count = {};
-    all.forEach(m => genresOf(m).forEach(g => { count[g] = (count[g] || 0) + 1; }));
-    return Object.entries(count).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ko')).map(([g]) => g);
+  /*RECO-START*/
+  /* ---------- 영화 추천: 취향 고르기(흥행작) + 비슷한 영화 + 비슷한 관객 ---------- */
+  // 장르는 7개로 묶어요
+  const G7 = [['action', '💥', '액션'], ['comedy', '😂', '코미디'], ['drama', '🎭', '드라마·실화'], ['thriller', '😱', '스릴러·공포'], ['sf', '🚀', 'SF·판타지'], ['anim', '🎨', '애니메이션'], ['music', '🎵', '음악·로맨스']];
+  const G7_WORDS = { action: ['액션', '범죄', '전쟁', '무협', '첩보', '어드벤처', '모험', '느와르'], comedy: ['코미디', '코믹'], drama: ['드라마', '실화', '역사', '사극', '휴먼', '가족', '전기', '다큐'],
+    thriller: ['스릴러', '공포', '호러', '미스터리', '추리', '오컬트', '재난', '좀비', '서스펜스', '서바이벌', '생존'], sf: ['SF', '판타지', '히어로', '우주'], anim: ['애니'], music: ['음악', '뮤지컬', '로맨스', '멜로', '공연', '콘서트'] };
+  const g7Label = (k) => { const g = G7.find(x => x[0] === k); return g ? `${g[1]} ${g[2]}` : ''; };
+  const g7Of = (m) => { if (m.g7) return [m.g7]; const s = String(m.genre || ''); const ks = G7.map(g => g[0]).filter(k => G7_WORDS[k].some(w => s.includes(w))); return ks.length ? ks : ['drama']; };
+  const MOODS = ['통쾌한', '웃긴', '감동', '눈물', '실화', '긴장감', '무서운', '반전', '영상미', '스케일', '설렘', '음악', '가족', '생각할 거리'];
+  const MOOD_FROM = { '통쾌한': ['액션', '범죄', '히어로'], '웃긴': ['코미디'], '감동': ['드라마', '휴먼', '가족', '애니'], '실화': ['실화', '역사', '전기'], '긴장감': ['스릴러', '미스터리', '재난', '서바이벌'],
+    '무서운': ['공포', '호러', '오컬트', '좀비'], '설렘': ['로맨스', '멜로'], '음악': ['음악', '뮤지컬', '공연'], '가족': ['가족', '애니'] };   // '스케일' · '영상미'는 장르만 보고 붙이지 않아요 (엉뚱한 추천 방지)
+  const moodOf = (m) => {
+    if (Array.isArray(m.mood) && m.mood.length) return m.mood;
+    const s = String(m.genre || ''); const out = Object.keys(MOOD_FROM).filter(k => MOOD_FROM[k].some(w => s.includes(w)));
+    if (/실화|실제 사건/.test(m.syn || '') && !out.includes('실화')) out.push('실화');
+    return out;
+  };
+  // 취향 고르기에 쓰는 흥행작 20편
+  const SEEDS = [
+    ['s01', '범죄도시 2', 2022, 'action', '이상용', ['마동석', '손석구', '최귀화'], ['통쾌한', '웃긴']],
+    ['s02', '베테랑', 2015, 'action', '류승완', ['황정민', '유아인'], ['통쾌한', '웃긴']],
+    ['s03', '탑건: 매버릭', 2022, 'action', '조셉 코신스키', ['톰 크루즈', '마일즈 텔러'], ['통쾌한', '스케일', '영상미']],
+    ['s04', '극한직업', 2019, 'comedy', '이병헌', ['류승룡', '이하늬', '진선규'], ['웃긴', '통쾌한']],
+    ['s05', '엑시트', 2019, 'comedy', '이상근', ['조정석', '윤아'], ['웃긴', '긴장감', '가족']],
+    ['s06', '7번방의 선물', 2013, 'drama', '이환경', ['류승룡', '갈소원'], ['눈물', '감동', '가족']],
+    ['s07', '서울의 봄', 2023, 'drama', '김성수', ['황정민', '정우성'], ['실화', '긴장감', '생각할 거리']],
+    ['s08', '명량', 2014, 'drama', '김한민', ['최민식', '류승룡'], ['실화', '스케일', '감동']],
+    ['s09', '기생충', 2019, 'thriller', '봉준호', ['송강호', '이선균', '조여정', '최우식'], ['반전', '긴장감', '생각할 거리']],
+    ['s10', '파묘', 2024, 'thriller', '장재현', ['최민식', '김고은', '유해진', '이도현'], ['무서운', '긴장감', '반전']],
+    ['s11', '부산행', 2016, 'thriller', '연상호', ['공유', '정유미', '마동석'], ['긴장감', '무서운', '눈물']],
+    ['s12', '어벤져스: 엔드게임', 2019, 'sf', '안소니 루소, 조 루소', ['로버트 다우니 주니어', '크리스 에반스'], ['스케일', '감동', '통쾌한']],
+    ['s13', '인터스텔라', 2014, 'sf', '크리스토퍼 놀란', ['매튜 맥커너히', '앤 해서웨이'], ['영상미', '감동', '생각할 거리']],
+    ['s14', '신과함께-죄와 벌', 2017, 'sf', '김용화', ['하정우', '차태현', '주지훈'], ['스케일', '눈물', '가족']],
+    ['s15', '겨울왕국 2', 2019, 'anim', '크리스 벅, 제니퍼 리', [], ['음악', '영상미', '가족']],
+    ['s16', '엘리멘탈', 2023, 'anim', '피터 손', [], ['설렘', '감동', '영상미']],
+    ['s17', '스즈메의 문단속', 2023, 'anim', '신카이 마코토', [], ['영상미', '감동', '설렘']],
+    ['s18', '보헤미안 랩소디', 2018, 'music', '브라이언 싱어', ['라미 말렉'], ['음악', '실화', '감동']],
+    ['s19', '라라랜드', 2016, 'music', '데이미언 셔젤', ['라이언 고슬링', '엠마 스톤'], ['음악', '설렘', '영상미']],
+    ['s20', '어바웃 타임', 2013, 'music', '리처드 커티스', ['도널 글리슨', '레이첼 맥아담스'], ['설렘', '감동', '가족']]
+  ].map(([id, title, year, g7, dir, cast, mood]) => ({ id, title, en: String(year), year, g7, dir, cast, mood, seed: true }));
+  const SEED_COLORS = { action: ['#1B1B1B', '#C1121F'], comedy: ['#3A2E00', '#FFB703'], drama: ['#1D2D44', '#748CAB'], thriller: ['#0B0B0B', '#4A4E69'], sf: ['#03045E', '#0096C7'], anim: ['#5A189A', '#F72585'], music: ['#3C096C', '#FF9E00'] };
+  SEEDS.forEach(s => { s.c = SEED_COLORS[s.g7]; });
+  // OTT에서 볼 수 있는 영화 (TMDB · JustWatch 기준 목록)
+  const OTT_LIST = (window.SMO_OTT || []).map(o => ({ ...o, en: String(o.year), isOtt: true, c: SEED_COLORS[g7Of(o)[0]] || SEED_COLORS.drama }));
+  // 추천 사유에 붙는 배경 한마디(p)와 시리즈(s). 같은 시리즈를 좋아했으면 후속작을 더 앞에 추천해요.
+  // 영화 등록·수정 화면의 '추천 한마디'를 적으면 그게 먼저 쓰여요.
+  const PITCH = {
+    // 상영 중 · 개봉 예정
+    mvndoomsday: { s: 'avengers', p: '〈어벤져스: 엔드게임〉 이후 7년 만의 어벤져스 정식 후속작이에요. 로버트 다우니 주니어가 이번엔 악당 닥터 둠으로 돌아와요.' },
+    mvndune3: { s: 'dune', p: '드니 빌뇌브의 〈듄〉 3부작 완결편이에요. 소설 「듄 메시아」를 바탕으로 황제가 된 폴의 이야기를 마무리해요.' },
+    mvmwam1gkqvcr6: { s: 'hunger', p: '〈헝거게임〉 1편보다 24년 앞선 이야기예요. 캣니스의 멘토 헤이미치가 참가했던 50번째 헝거게임을 그린 프리퀄이에요.' },
+    mvnfall2: { s: 'fall', p: '600m 철탑 꼭대기에 고립되는 생존 스릴러 〈폴〉(2022)의 속편이에요.' },
+    mvmwalwfvkni78: { s: 'tazza', p: '〈타짜〉 시리즈의 네 번째 영화예요. 〈국가부도의 날〉의 최국희 감독이 연출했어요.' },
+    mvclfocker: { s: 'fockers', p: '〈미트 페어런츠〉 시리즈가 16년 만에 돌아온 네 번째 이야기예요. 로버트 드 니로와 벤 스틸러가 다시 만나요.' },
+    mvclmadoka: { s: 'madoka', p: '2013년 극장판 〈반역의 이야기〉 이후 13년 만에 나온 〈마법소녀 마도카☆마기카〉의 완전 신작 극장판이에요.' },
+    mvmwaloqmsn1as: { s: 'conan', p: '해마다 새 이야기로 돌아오는 〈명탐정 코난〉 극장판 시리즈의 최신작이에요.' },
+    mvt1598766: { s: 'shinchan', p: '해마다 새 이야기로 돌아오는 〈짱구는 못말려〉 극장판의 신작이에요. 이번엔 요괴들과의 여름 휴가 이야기예요.' },
+    mvt1457866: { s: 'ouatih', p: '〈원스 어폰 어 타임 인 할리우드〉에서 브래드 피트가 연기한 스턴트맨 클리프 부스가 주인공인 후속작이에요. 쿠엔틴 타란티노가 각본을, 데이비드 핀처가 연출을 맡았어요.' },
+    mvmwaltzmbbcyx: { p: '〈쓰리 빌보드〉, 〈이니셰린의 밴시〉로 아카데미 후보에 오른 마틴 맥도나 감독의 신작이에요.' },
+    mvmwakx9e1idzq: { p: '〈퓨리〉의 데이비드 에이어 감독과 브래드 피트가 다시 만난 생존 스릴러예요.' },
+    mvclmothermary: { p: '〈고스트 스토리〉, 〈그린 나이트〉의 데이빗 로워리 감독이 만든 A24 영화예요. 앤 해서웨이가 팝스타로 나와요.' },
+    mvcldaynight: { p: '〈최악의 하루〉, 〈조제〉의 김종관 감독이 만든 잔잔한 대화 영화예요.' },
+    mvclcatinhat: { p: '닥터 수스의 고전 그림책 「모자 쓴 고양이」를 새 애니메이션으로 옮긴 가족 영화예요.' },
+    mvmwakt0bnl6z5: { p: 'SNS 연재 만화에서 시작해 일본 최고 인기 캐릭터가 된 〈치이카와〉의 첫 극장판이에요.' },
+    mvmwalyw856aen: { p: '데뷔작 〈소리도 없이〉로 주목받은 홍의정 감독의 신작이에요.' },
+    mvnhexed: { p: '〈주토피아〉, 〈엔칸토〉를 만든 디즈니 애니메이션 스튜디오의 새 오리지널 작품이에요.' },
+    mvt791523: { p: '〈코렐라인〉, 〈쿠보와 전설의 악기〉를 만든 스톱모션 명가 라이카 스튜디오의 신작이에요.' },
+    mvt950028: { p: '〈북스마트〉, 〈돈 워리 달링〉의 올리비아 와일드가 감독과 주연을 함께 맡은 어른들의 코미디예요.' },
+    mvt1214931: { p: '나치 전범을 심판한 뉘른베르크 재판이 배경이에요. 러셀 크로우가 헤르만 괴링을, 라미 말렉이 그를 면담한 정신과 의사를 연기해요.' },
+    mvt1421903: { p: '〈더 위치〉, 〈노스페라투〉의 로버트 에거스 감독이 만든 중세 늑대인간 공포 영화예요.' },
+    mvt1294380: { p: '백영옥 작가의 동명 소설을 영화로 옮겼어요. 실연의 아픔을 가진 사람들이 아침 모임에서 만나는 이야기예요.' },
+    mvt1317410: { p: '〈신세계〉, 〈마녀〉의 박훈정 감독이 만든 범죄 액션 신작이에요.' },
+    mvt1452168: { p: '〈마이클 클레이튼〉의 감독이자 드라마 〈안도르〉를 만든 토니 길로이의 신작이에요.' },
+    mvt940009: { p: '〈인크레더블〉, 〈라따뚜이〉의 브래드 버드 감독이 오랜만에 내놓은 애니메이션이에요.' },
+    mvt1765072: { p: '〈더 리허설〉로 유명한 네이선 필더가 공동 연출한 다큐멘터리예요.' },
+    // OTT
+    ott1726: { s: 'avengers', p: '마블 시네마틱 유니버스(MCU)를 연 첫 작품이에요. 어벤져스 시리즈를 처음 본다면 여기서 시작하면 좋아요.' },
+    ott24428: { s: 'avengers', p: '아이언맨, 캡틴 아메리카, 토르, 헐크가 처음 한 팀이 된 작품이에요.' },
+    ott299536: { s: 'avengers', p: '타노스와의 전쟁을 그린 〈엔드게임〉의 바로 앞 이야기예요. 충격적인 결말로 유명해요.' },
+    ott299534: { s: 'avengers', p: '10년 넘게 이어진 인피니티 사가의 완결편이에요.' },
+    ott70160: { s: 'hunger', p: '제니퍼 로렌스를 스타로 만든 〈헝거게임〉 시리즈의 첫 편이에요.' },
+    ott131631: { s: 'hunger', p: '〈헝거게임〉 시리즈 세 번째 이야기로, 캣니스가 반란의 상징이 되는 과정을 그려요.' },
+    ott131634: { s: 'hunger', p: '〈판엠의 불꽃〉부터 이어진 캣니스 4부작의 완결편이에요.' },
+    ott695721: { s: 'hunger', p: '독재자 스노우 대통령의 젊은 시절을 그린 〈헝거게임〉 프리퀄이에요.' },
+    ott83533: { s: 'avatar', p: '제임스 카메론의 〈아바타〉 시리즈 세 번째 이야기예요.' },
+    ott1084244: { s: 'toystory', p: '우디와 버즈가 돌아온 〈토이 스토리〉 시리즈 다섯 번째 이야기예요.' },
+    ott155: { p: '크리스토퍼 놀란 감독의 배트맨 3부작 중 두 번째 작품이에요. 히스 레저의 조커 연기와 함께 역대 최고의 히어로 영화로 꼽혀요.' },
+    ott27205: { p: '꿈속의 꿈을 설계하는 크리스토퍼 놀란의 대표작이에요. 아카데미 4관왕을 차지했어요.' },
+    ott157336: { p: '물리학자 킵 손의 자문으로 블랙홀과 시간의 비밀을 그린 크리스토퍼 놀란의 우주 SF예요.' },
+    ott940721: { p: '아카데미 시각효과상을 받은 일본 고질라 영화예요. 전쟁 직후 일본을 배경으로 한 드라마도 깊어요.' },
+    ott354912: { p: '멕시코 ‘죽은 자의 날’을 배경으로 한 픽사 작품이에요. 아카데미 장편 애니메이션상과 주제가상을 받았어요.' },
+    ott129: { p: '미야자키 하야오의 대표작으로, 아카데미 장편 애니메이션상과 베를린 영화제 황금곰상을 받았어요.' },
+    ott432836: { p: '김영하 작가의 소설이 원작이에요. 알츠하이머에 걸린 전직 연쇄살인범을 설경구가 연기해요.' },
+    ott278: { p: '스티븐 킹 원작으로, 영화 평점 사이트 IMDb에서 오랫동안 역대 1위를 지킨 명작이에요.' },
+    ott238: { p: '역대 최고의 영화를 꼽을 때 늘 맨 앞에 오는 마피아 영화예요. 아카데미 작품상을 받았어요.' },
+    ott1366: { p: '실베스터 스탤론의 출세작이자 아카데미 작품상 수상작이에요. 스포츠 영화의 교과서로 불려요.' },
+    ott496243: { p: '봉준호 감독의 작품으로, 비영어 영화 최초로 아카데미 작품상을 받았어요.' },
+    ott603: { p: '‘현실이 가상이라면?’이라는 질문으로 SF 액션의 판도를 바꾼 작품이에요.' },
+    ott671: { s: 'hp', p: '전 세계를 사로잡은 〈해리 포터〉 시리즈 8편의 첫 이야기예요.' },
+    ott533535: { p: '라이언 레이놀즈의 데드풀과 휴 잭맨의 울버린이 처음 한 영화에 만났어요. 역대 청소년관람불가 영화 흥행 1위를 기록했어요.' },
+    ott1083381: { p: '유튜브에서 화제가 된 케인 파슨스의 웹 공포 시리즈 〈백룸〉을 A24가 영화로 만들었어요.' },
+    ott1148365: { p: '장난감 자동차 ‘매치박스’를 영화로 옮긴 액션 어드벤처로, 〈익스트랙션〉의 샘 하그레이브 감독이 연출했어요.' },
+    ott1108427: { p: '디즈니 애니메이션 〈모아나〉를 실사로 다시 만든 작품이에요.' },
+    ott755898: { p: 'H. G. 웰스의 고전 SF 「우주전쟁」을 컴퓨터 화면 속 이야기로 다시 만든 작품이에요.' },
+    // 취향 고르기 영화(시리즈 연결용)
+    s12: { s: 'avengers' }, s13: {}, s01: {}
+  };
+  const pitchOf = (m) => m.pitch || (PITCH[m.id] || {}).p || '';
+  const seriesOf = (m) => m.series || (PITCH[m.id] || {}).s || '';
+  const MIN_TASTE = 3;
+
+  // 저장: 취향 답(seed id → 1 좋았어요 / -1 별로 / 0 안 봤어요)은 이 브라우저와 내 리뷰 문서(taste)에 함께 저장
+  const PICK_KEY = 'smo.pick.v2', TASTE_KEY = 'smo.taste.v1', HIDE_KEY = 'smo.hide.v1';
+  const loadJSON = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) || d; } catch { return d; } };
+  const saveJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+  const pick = (() => { const s = loadJSON(PICK_KEY, {}); return { like: new Set(s.like || []), dislike: new Set(s.dislike || []), soon: s.soon !== false }; })();
+  const savePick = () => saveJSON(PICK_KEY, { like: [...pick.like], dislike: [...pick.dislike], soon: pick.soon });
+  let localTaste = loadJSON(TASTE_KEY, {});
+  let hidden = new Set(loadJSON(HIDE_KEY, []));
+  const recoUI = { open: null, pair: null, confirmReset: false, deck: [] };
+  function myTaste() { const t = myDoc().taste; return t && Object.keys(t).length ? { ...t, ...localTaste } : localTaste; }   // 이 브라우저에서 방금 누른 답이 우선
+  const seenV = (v) => v === 1 || v === -1 || v === 2;   // 본 영화(좋았어요 · 별로였어요 · 그냥 그랬어요)
+  const tasteAnswered = () => Object.keys(myTaste()).filter(k => SEEDS.some(s => s.id === k)).length;
+  async function setTaste(sid, v, force) {
+    const t = { ...myTaste() };
+    [].concat(sid).forEach(id => { if (!force && t[id] === v) delete t[id]; else t[id] = v; });
+    localTaste = t; saveJSON(TASTE_KEY, t);
+    if (myId && canWrite && storeState === 'ready') { try { await saveMyDoc({ taste: t }); } catch {} }
   }
-  // 점수: 고른 장르와 겹칠수록 ↑, 평균 별점 ↑, (예정작은) 기대돼요 ↑ / 뺀 장르가 하나라도 있으면 제외
-  function recommend(all) {
-    const pool = all.filter(m => m.rel <= 0 || pick.soon);
-    const out = [];
-    pool.forEach(m => {
-      const gs = genresOf(m);
-      if (gs.some(g => pick.dislike.has(g))) return;
-      const hit = gs.filter(g => pick.like.has(g));
-      if (pick.like.size && !hit.length) return;
-      const avg = avgOf(m.id) || 0;
-      const hype = m.rel > 0 ? hypeCount(m.id) : 0;
-      const score = hit.length * 100 + avg * 10 + hype * 3 + (m.rel <= 0 ? Math.max(0, 30 + m.rel) / 10 : 0);
-      const why = [];
-      if (hit.length) why.push(`${hit.join('·')} 취향 일치`);
-      if (avg) why.push(`★ ${avg.toFixed(1)}`);
-      if (m.rel > 0) why.push(`D-${m.rel}${hype ? ` · 🍿${hype}` : ''}`);
-      else if (!avg) why.push(m.rel >= -7 ? '최근 개봉' : '상영 중');
-      out.push({ m, score, why: why.join(' · '), short: avg ? `★ ${avg.toFixed(1)}` : (hit.length ? hit[0] : (m.rel > 0 ? `D-${m.rel}` : '신작')) });
+
+  // 사람마다 "어떤 영화를 얼마나 좋아하는지"(-1 ~ 1)를 모아요
+  function signalsOf(doc, taste, isMe) {
+    const s = new Map();
+    Object.entries(taste || {}).forEach(([k, v]) => { if (v === 1 || v === -1) s.set(k, v); else if (v === 2) s.set(k, 0); });   // 2 = 그냥 그랬어요: 본 영화로는 세지만 취향 점수에는 중립
+    Object.entries(doc?.films || {}).forEach(([k, r]) => { if (!r || !r.rating) return; let v = (r.rating - 3) / 2; if (!v) v = r.verdict === 'bad' ? -0.25 : 0.25; s.set(k, v); });
+    Object.keys(doc?.hype || {}).forEach(k => { if (doc.hype[k] && !s.has(k)) s.set(k, 0.5); });
+    if (isMe) hidden.forEach(k => { if (!s.has(k)) s.set(k, -0.6); });
+    return s;
+  }
+  const nameKey = (x) => String(x || '').replace(/\s+/g, '');
+  // 영화의 특징: 장르 · 감독 · 배우 · 분위기
+  function featsOf(m) {
+    const f = new Map();
+    const add = (k, w) => f.set(k, (f.get(k) || 0) + w);
+    const gs = g7Of(m); gs.forEach(g => add('g:' + g, 1 / gs.length));
+    const sr = seriesOf(m); if (sr) add('s:' + sr, 2.2);   // 같은 시리즈
+    String(m.dir || '').split(/[,/&·]+/).map(nameKey).filter(Boolean).forEach(d => add('d:' + d, 1.6));
+    (m.cast || []).slice(0, 4).map(c => nameKey(typeof c === 'string' ? c : c.name)).filter(Boolean).forEach(c => add('c:' + c, 0.7));
+    moodOf(m).forEach(x => add('m:' + x, 0.35));
+    return f;
+  }
+  const itemIndex = (all) => { const ix = new Map(); OTT_LIST.forEach(o => ix.set(o.id, o)); SEEDS.forEach(s => ix.set(s.id, s)); all.forEach(m => ix.set(m.id, m)); return ix; };
+
+  // 1) 비슷한 영화: 내가 좋아한/싫어한 영화의 특징을 모아 취향 프로필을 만들어요
+  function buildProfile(sig, ix) {
+    const prof = new Map(), src = new Map(); let total = 0;
+    sig.forEach((w, id) => {
+      const it = ix.get(id); if (!it) return; total += Math.abs(w);
+      featsOf(it).forEach((fw, k) => {
+        prof.set(k, (prof.get(k) || 0) + w * fw);
+        if (w > 0) { if (!src.has(k)) src.set(k, []); src.get(k).push({ w: w * fw, title: it.title }); }
+      });
     });
-    return out.sort((a, b) => b.score - a.score);
+    return { prof, src, total: Math.max(1, total) };
   }
-  function genrePicker(all) {
-    const gs = allGenres(all);
-    const chip = (g, kind) => {
-      const on = (kind === 'like' ? pick.like : pick.dislike).has(g);
-      const other = (kind === 'like' ? pick.dislike : pick.like).has(g);
-      return `<button type="button" class="pk-chip ${kind} ${on ? 'on' : ''} ${other ? 'other' : ''}" data-pk="${kind}" data-genre="${esc(g)}" aria-pressed="${on}">${kind === 'dislike' && on ? '✕ ' : ''}${esc(g)}</button>`;
-    };
-    return `<div class="picker">
-      <div class="pk-row"><div class="pk-label">👍 보고 싶은 장르 <small>여러 개 고를 수 있어요</small></div><div class="pk-chips">${gs.map(g => chip(g, 'like')).join('')}</div></div>
-      <div class="pk-row"><div class="pk-label">🙅 빼고 싶은 장르 <small>이 장르가 들어간 영화는 빠져요</small></div><div class="pk-chips">${gs.map(g => chip(g, 'dislike')).join('')}</div></div>
-      <div class="pk-row pk-opts">
-        <label class="pk-check"><input type="checkbox" id="pk-soon" ${pick.soon ? 'checked' : ''}> 개봉 예정작도 포함</label>
-        ${pick.like.size || pick.dislike.size ? `<button type="button" class="link muted" data-pk-reset>선택 초기화</button>` : ''}
+  function cbScore(m, P) {
+    // 장르가 내 취향과 안 맞으면(예: 라라랜드만 좋아했는데 공포 영화) 분위기·배우가 겹쳐도 거의 추천하지 않아요
+    const ga = Math.max(...g7Of(m).map(g => P.prof.get('g:' + g) || 0));
+    const gate = ga > 0.05 ? 1 : 0.2;
+    let s = 0, best = null;
+    featsOf(m).forEach((fw, k) => { const p = P.prof.get(k) || 0; let c = p * fw; if (c > 0 && (k[0] === 'm' || k[0] === 'c')) c *= gate; s += c; const pref = { s: 3.5, d: 2.2, c: 1.7, m: 1.4, g: 1 }[k[0]] || 1; if (c > 0 && (gate === 1 || k[0] === 'd' || k[0] === 's') && (!best || c * pref > best.c * best.pref)) best = { k, c, pref }; });   // 이유는 감독 · 배우 · 분위기처럼 구체적인 것을 먼저
+    return { v: Math.tanh(0.9 * s / Math.sqrt(P.total)), best };
+  }
+  function reasonFrom(best, P, mid) {
+    if (!best) return '';
+    const cand = (P.src.get(best.k) || []).slice().sort((a, b) => b.w - a.w).filter((x, i, arr) => x.w >= arr[0].w * 0.6);   // 비슷하게 좋아한 영화가 여럿이면 돌아가며 이유로 써요
+    const src = cand.length ? cand[[...String(mid || '')].reduce((h, ch) => h + ch.charCodeAt(0), 0) % cand.length].title : '';
+    const [t, ...rest] = best.k.split(':'); const v = rest.join(':');
+    if (t === 's') return `〈${src}〉에서 이어지는 시리즈`;
+    if (t === 'd') return `〈${src}〉 팬이라면`;
+    if (t === 'c') { const it = [...SEEDS].find(s => s.title === src); const name = (it?.cast || []).find(c => nameKey(c) === v) || v; return `〈${src}〉의 ${name} 출연`; }
+    if (t === 'g') return `〈${src}〉처럼 ${g7Label(v)}`;
+    if (t === 'm') return `〈${src}〉처럼 ‘${v}’ 분위기`;
+    return '';
+  }
+  // 2) 비슷한 관객: 같은 영화에 비슷하게 답한 사람을 찾아요 (코사인 유사도)
+  function neighbors(mySig) {
+    const out = [];
+    reviewDocs.forEach(d => {
+      if (d.uid === myId) return;
+      const s = signalsOf(d, d.taste, false); if (s.size < 2) return;
+      let dot = 0, a = 0, b = 0, n = 0;
+      mySig.forEach((x, k) => { if (s.has(k)) { const y = s.get(k); dot += x * y; a += x * x; b += y * y; n++; } });
+      if (n < 2 || !a || !b) return;
+      const sim = dot / Math.sqrt(a * b) * (n / (n + 2));
+      if (sim > 0.15) out.push({ uid: d.uid, sim, sig: s, doc: d });
+    });
+    return out.sort((x, y) => y.sim - x.sim).slice(0, 15);
+  }
+  function cfScore(id, nb) {
+    let num = 0, den = 0, k = 0, stars = [];
+    nb.forEach(u => { if (u.sig.has(id)) { num += u.sim * u.sig.get(id); den += u.sim; k++; const r = u.doc.films?.[id]?.rating; if (r) stars.push(r); } });
+    return k ? { v: num / den, k, star: stars.length ? stars.reduce((a, b) => a + b, 0) / stars.length : 0 } : null;
+  }
+  const popScore = (m) => { const st = statsFor(m.id); return (st.n ? (st.avg - 3) / 2 * Math.min(1, st.n / 3) : 0) + Math.min(1, hypeCount(m.id) / 5) * 0.5 + st.n * 0.05; };
+
+  function recoData(all) {
+    const ix = itemIndex(all);
+    const me = myDoc();
+    const mySig = signalsOf(me, myTaste(), true);
+    const P = buildProfile(mySig, ix);
+    const nb = neighbors(mySig);
+    const pool = all.filter(m => !hidden.has(m.id) && !(me.films || {})[m.id]?.rating)
+      .filter(m => !g7Of(m).some(g => pick.dislike.has(g)));
+    const items = pool.map(m => {
+      const cb = cbScore(m, P), cf = cfScore(m.id, nb), pop = popScore(m);
+      const liked = pick.like.size && g7Of(m).some(g => pick.like.has(g)) ? 0.25 : 0;
+      const score = (cf ? 0.45 * cb.v + 0.55 * cf.v : cb.v) + 0.12 * pop + liked + (m.rel <= 0 && m.rel > -14 ? 0.04 : 0);
+      const why = cf && cf.v > 0.2 && (!cb.best || cf.v >= cb.v) ? `취향 비슷한 관객 ${cf.k}명이 좋아했어요${cf.star ? ` · ★${cf.star.toFixed(1)}` : ''}` : (reasonFrom(cb.best, P, m.id) || (liked ? `고른 장르 ${g7Of(m).map(g7Label).join(' ')}` : (pop > 0.2 ? 'SMO 관객 평이 좋은 영화예요' : '')));
+      return { m, score, cb, cf, pop, why, match: Math.max(50, Math.min(99, Math.round(58 + 41 * Math.tanh(score * 1.2)))) };
+    });
+    // OTT 영화: 취향 고르기에서 이미 본 영화는 빼요
+    const seenTitles = new Set(SEEDS.filter(s => seenV(myTaste()[s.id])).map(s => s.title));
+    const ott = OTT_LIST.filter(o => !hidden.has(o.id) && !seenTitles.has(o.title) && !g7Of(o).some(g => pick.dislike.has(g))).map(o => {
+      const cb = cbScore(o, P), cf = cfScore(o.id, nb);
+      const liked = pick.like.size && g7Of(o).some(g => pick.like.has(g)) ? 0.25 : 0;
+      const score = (cf ? 0.45 * cb.v + 0.55 * cf.v : cb.v) + 0.08 * ((o.vote || 7) - 7) + liked;
+      return { m: o, score, cb, cf, why: reasonFrom(cb.best, P, o.id) || `TMDB 평점 ★${((o.vote || 0) / 2).toFixed(1)}`, match: Math.max(50, Math.min(99, Math.round(58 + 41 * Math.tanh(score * 1.2)))) };
+    });
+    return { mySig, P, nb, items, ix, ott };
+  }
+  function similarTo(item, all) {
+    const fa = featsOf(item); const na = Math.sqrt([...fa.values()].reduce((s, x) => s + x * x, 0)) || 1;
+    return all.filter(m => m.id !== item.id && !hidden.has(m.id)).map(m => {
+      const fb = featsOf(m); let dot = 0; let shared = null;
+      fb.forEach((w, k) => { if (fa.has(k)) { dot += w * fa.get(k); if (!shared || w * fa.get(k) > shared.c) shared = { k, c: w * fa.get(k) }; } });
+      const nbb = Math.sqrt([...fb.values()].reduce((s, x) => s + x * x, 0)) || 1;
+      return { m, sim: dot / (na * nbb), shared };
+    }).filter(x => x.sim > 0.12).sort((a, b) => b.sim - a.sim);
+  }
+  const sharedLabel = (sh) => { if (!sh) return ''; const [t, ...r] = sh.k.split(':'); const v = r.join(':'); return t === 'd' ? '같은 감독' : t === 'c' ? '같은 배우 출연' : t === 'g' ? g7Label(v) : `‘${v}’ 분위기`; };
+
+  /* ----- 화면 ----- */
+  const recCard = (m, why, match) => `<div class="rec-item"><a class="work" href="#movie-${m.id}">${frame(m, 'poster', 1)}<div class="work-head"><span class="t fit" data-min="9">${esc(m.title)}</span>
+      ${match ? `<span class="rec-match">${match}% 일치${m.rel > 0 ? ` · D-${m.rel}` : ''}</span>` : (m.rel > 0 ? `<span class="muted">D-${m.rel}</span>` : '')}<span class="pk-why">${esc(why || '')}</span>${pitchOf(m) ? `<span class="rec-pitch">${esc(pitchOf(m))}</span>` : ''}</div></a>
+      <button type="button" class="rec-x" data-hide="${esc(m.id)}" title="관심 없음" aria-label="${esc(m.title)} 관심 없음">✕</button></div>`;
+  // OTT 서비스 바로가기: 배지를 누르면 그 서비스에서 영화 제목으로 바로 검색해요
+  const OTT_SITES = { '넷플릭스': (q) => `https://www.netflix.com/search?q=${q}`, '디즈니+': (q) => `https://www.disneyplus.com/ko-kr/search?q=${q}`, '티빙': (q) => `https://www.tving.com/search?keyword=${q}`, '웨이브': (q) => `https://www.wavve.com/search?searchWord=${q}`,
+    '왓챠': (q) => `https://watcha.com/search?query=${q}`, '쿠팡플레이': () => 'https://www.coupangplay.com/', '프라임 비디오': (q) => `https://www.primevideo.com/search?phrase=${q}`, '애플TV+': (q) => `https://tv.apple.com/kr/search?term=${q}` };
+  const ottUrl = (name, title) => OTT_SITES[name] ? OTT_SITES[name](encodeURIComponent(title)) : '';
+  const OTT_LOGOS = { '넷플릭스': 'images/ott-logos/netflix.png', '디즈니+': 'images/ott-logos/disney.png', '티빙': 'images/ott-logos/tving.png', '웨이브': 'images/ott-logos/wavve.png', '왓챠': 'images/ott-logos/watcha.png', '프라임 비디오': 'images/ott-logos/prime.png' };   // TMDB 제공 서비스 로고
+  const ottCard = (o, why, match) => {
+    const svc = o.ott || []; const first = ottUrl(svc[0], o.title);
+    return `<div class="rec-item ott-item"><a class="work" href="${esc(first)}" target="_blank" rel="noopener" title="${esc(svc[0] || '')}에서 보기">${frame(o, 'poster', 1, { src: o.poster })}<div class="work-head"><span class="t fit" data-min="9">${esc(o.title)}</span>
+      ${match ? `<span class="rec-match">${match}% 일치 · ${o.year}</span>` : `<span class="muted">${o.year}</span>`}</div></a>
+      <div class="ott-badges">${svc.map(n => `<a href="${esc(ottUrl(n, o.title))}" target="_blank" rel="noopener" title="${esc(n)}에서 ‘${esc(o.title)}’ 보기">${OTT_LOGOS[n] ? `<img src="${esc(OTT_LOGOS[n])}" alt="" aria-hidden="true">` : ''}<span>${esc(n)}</span></a>`).join('')}</div>
+      <span class="pk-why">${esc(why || '')}</span>${pitchOf(o) ? `<span class="rec-pitch">${esc(pitchOf(o))}</span>` : ''}
+      <button type="button" class="rec-x" data-hide="${esc(o.id)}" title="관심 없음" aria-label="${esc(o.title)} 관심 없음">✕</button></div>`;
+  };const recRow = (icon, title, sub, cards, empty) => `<section class="rec-row"><div class="rec-row-head"><h3>${icon} ${title}</h3>${sub ? `<span class="muted">${sub}</span>` : ''}</div>
+      ${cards.length ? `<div class="rec-strip">${cards.join('')}</div>` : `<div class="note">${empty}</div>`}</section>`;
+  // 취향 고르기: 장르가 다른 두 영화를 나란히 보여 주는 이지선다 (10쌍)
+  const SEED_POSTERS = window.SMO_SEED_POSTERS || {};
+  // 흥행작 20편 중에서 장르가 다른 두 편을 무작위로 뽑아요. 본 영화가 있는 쌍을 5번 답하면 끝나요.
+  // '둘 다 안 봤어요'는 횟수에 세지 않고 새 두 편을 보여 줘요. 지난번에 나왔던 영화는 뒤로 미뤄요.
+  const TARGET = 5, LAST_KEY = 'smo.lastdeck.v1';
+  const seedById = (id) => SEEDS.find(s => s.id === id);
+  const pairDone = (p, t) => p.some(id => id in t);   // 두 영화 중 하나라도 답하면 다음 쌍으로
+  const pairCounts = (p, t) => p.some(id => seenV(t[id]));   // 본 영화가 있는 쌍만 셈
+  const countedPairs = (t) => recoUI.deck.filter(p => pairCounts(p, t)).length;
+  function shuffled(a) { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function nextPair(t) {
+    const inDeck = new Set(recoUI.deck.flat());
+    const last = loadJSON(LAST_KEY, []);
+    const order = (ids) => shuffled(ids).sort((x, y) => last.indexOf(x) - last.indexOf(y));   // 안 나왔던 영화(-1) → 오래전에 나온 영화 순
+    let pool = order(SEEDS.filter(s => !(s.id in t) && !inDeck.has(s.id)).map(s => s.id));
+    if (pool.length < 2) pool = order(SEEDS.filter(s => !inDeck.has(s.id)).map(s => s.id));   // 다 답했으면 답을 고칠 수 있게 다시 보여 줘요
+    for (let i = 0; i < pool.length; i++) for (let j = i + 1; j < pool.length; j++) if (seedById(pool[i]).g7 !== seedById(pool[j]).g7) return [pool[i], pool[j]];
+    return pool.length >= 2 ? [pool[0], pool[1]] : null;
+  }
+  function saveLast() { const ids = recoUI.deck.flat(); saveJSON(LAST_KEY, loadJSON(LAST_KEY, []).filter(x => !ids.includes(x)).concat(ids)); }
+  function curPair(t) {
+    if (!recoUI.deck.length) { const np = nextPair(t); if (np) { recoUI.deck.push(np); saveLast(); } }
+    if (recoUI.pair != null && recoUI.deck[recoUI.pair]) return recoUI.pair;
+    const i = recoUI.deck.findIndex(p => !pairDone(p, t)); return i < 0 ? Math.max(0, recoUI.deck.length - 1) : i;
+  }
+  function advance(from) {   // 다음 쌍으로: 덱에 남은 쌍 → 없으면 새로 뽑기 → 5쌍을 채웠으면 추천 화면
+    const t = myTaste(); const seen = SEEDS.filter(s => seenV(t[s.id])).length;
+    if (countedPairs(t) >= TARGET && seen >= MIN_TASTE) { recoUI.mode = 'result'; window.scrollTo(0, 0); return; }
+    const nx = recoUI.deck.findIndex((p, k) => k > from && !pairDone(p, t));
+    if (nx >= 0) { recoUI.pair = nx; return; }
+    const np = nextPair(t);
+    if (np && !recoUI.deck.some(p => p[0] === np[0] && p[1] === np[1])) { recoUI.deck.push(np); recoUI.pair = recoUI.deck.length - 1; saveLast(); return; }
+    if (seen >= MIN_TASTE) { recoUI.mode = 'result'; window.scrollTo(0, 0); }
+  }
+  function duelCard(s, v) {
+    const b = (val, label, cls) => `<button type="button" class="sd-btn ${cls}" data-taste="${s.id}|${val}" aria-pressed="${v === val}">${label}</button>`;
+    const g = G7.find(x => x[0] === s.g7) || ['', '🎬', ''];
+    const poster = SEED_POSTERS[s.id];
+    const who = s.cast.length ? s.cast.slice(0, 2).join(' · ') : '목소리 출연';
+    return `<div class="duel-card ${v === 1 ? 'is-like' : v === -1 ? 'is-dislike' : v === 2 ? 'is-meh' : v === 0 ? 'is-unseen' : ''}">
+      <div class="dc-art${poster ? ' has-poster' : ''}" style="background:linear-gradient(150deg, ${s.c[0]}, ${s.c[1]})"><span class="dc-emoji">${g[1]}</span>${poster ? `<img class="dc-bg" src="${esc(poster)}" alt="" aria-hidden="true" onerror="this.remove()"><img class="dc-fg" src="${esc(poster)}" alt="${esc(s.title)} 포스터" onerror="this.parentElement.classList.remove('has-poster'); this.remove()">` : ''}
+        <span class="dc-genre">${g[1]} ${g[2]}</span>${v === 1 ? '<span class="dc-mark">👍</span>' : v === -1 ? '<span class="dc-mark">👎</span>' : v === 2 ? '<span class="dc-mark">😐</span>' : v === 0 ? '<span class="dc-mark small">안 봤어요</span>' : ''}</div>
+      <div class="dc-body"><b class="dc-title">${esc(s.title)}</b><span class="sd-meta">${s.year} · ${esc(String(s.dir).split(',')[0])}</span><span class="sd-meta">${esc(who)}</span></div>
+      <div class="sd-btns">${b(1, '👍 좋았어요', 'like')}${b(-1, '👎 별로였어요', 'dislike')}${b(2, '😐 그냥 그랬어요', 'meh')}${b(0, '안 봤어요', 'unseen')}</div></div>`;
+  }
+  function tasteBox() {
+    const t = myTaste(); const rated = SEEDS.filter(s => seenV(t[s.id])).length;
+    const done = countedPairs(t);
+    const ready = rated >= MIN_TASTE;
+    const open = recoUI.open ?? !ready;
+    const i = curPair(t); const [a, b] = (recoUI.deck[i] || []).map(seedById);
+    return `<section class="taste-box" id="taste-box">
+      <div class="taste-top"><span><b>🎬 취향 고르기</b> <span class="muted">${ready ? `${rated}편에 답했어요 · ${done < TARGET ? '더 고르면 추천이 더 정확해져요' : '답을 고치거나 아래 추천 보기를 눌러 주세요'}` : `두 영화씩 보여 드려요. 본 영화는 어땠는지 골라 주세요. ${MIN_TASTE}편 이상이면 맞춤 추천이 시작돼요.`}</span></span>
+        <span class="taste-prog"><i style="width:${Math.min(100, rated / MIN_TASTE * 100)}%"></i></span><span class="taste-n">${rated} / ${MIN_TASTE}</span></div>
+      <div class="duel">
+        <div class="duel-head"><span class="duel-step"><b>${Math.min(done + (pairCounts(recoUI.deck[i] || [], t) ? 0 : 1), TARGET)}</b> / ${TARGET}</span><span class="muted">${done >= TARGET ? `${TARGET}쌍을 모두 골랐어요. 고치고 싶은 답이 있으면 다시 눌러 주세요.` : '장르가 다른 두 영화예요. 본 영화를 골라 답하면 다음으로 넘어가요.'}</span></div>
+        <div class="duel-cards">${duelCard(a, t[a.id])}<span class="duel-vs">VS</span>${duelCard(b, t[b.id])}</div>
+        <div class="duel-nav"><button type="button" class="link muted" data-duel="prev" ${i === 0 ? 'disabled' : ''}>← 이전</button>
+          <button type="button" class="duel-skip" data-duel="skip">🙈 둘 다 안 봤어요 · 다른 영화 보기</button>
+          <button type="button" class="link muted" data-duel="next" ${i === recoUI.deck.length - 1 && !pairDone(recoUI.deck[i] || [], t) ? 'disabled' : ''}>다음 →</button></div>
+        <div class="duel-dots" aria-hidden="true">${Array.from({ length: TARGET }, (_, k) => `<span class="dot ${k < done ? 'done' : ''} ${k === Math.min(done, TARGET - 1) ? 'cur' : ''}"></span>`).join('')}</div>
+        <div class="duel-reset">${recoUI.confirmReset ? `<span class="muted">지금까지 고른 답을 모두 지우고 처음부터 할까요?</span><button type="button" class="link danger" data-duel="reset-yes">처음부터 다시</button><button type="button" class="link" data-duel="reset-no">취소</button>` : `<button type="button" class="link muted" data-duel="reset">↺ 처음부터 다시 고르기</button>`}</div>
       </div>
-    </div>`;
+      <div class="hint">취향 답은 이 브라우저${myId && storeState === 'ready' ? '와 내 리뷰 기록' : ''}에 저장돼요. 같은 버튼을 다시 누르면 취소돼요.</div>
+      <div class="taste-go">${ready ? `<button type="button" class="submit" data-duel="done">추천 보기 →</button>` : `<span class="muted">본 영화 ${MIN_TASTE - rated}편만 더 답하면 추천을 볼 수 있어요</span>`}</div>
+    </section>`;
   }
-  const recWork = ({ m, why }) => `<a class="work" href="#movie-${m.id}">${frame(m, 'poster', 1)}<div class="work-head"><span class="t fit" data-min="9">${esc(m.title)}</span><span class="pk-why">${esc(why)}</span></div></a>`;
-  document.addEventListener('click', (e) => {
+  function profileChips(P) {
+    const top = (pre, sign) => [...P.prof.entries()].filter(([k, v]) => k.startsWith(pre) && v * sign > 0.15).sort((a, b) => (b[1] - a[1]) * sign);
+    const g = top('g:', 1).slice(0, 3).map(([k]) => g7Label(k.slice(2)));
+    const gx = top('g:', -1).slice(0, 2).map(([k]) => g7Label(k.slice(2)));
+    const md = top('m:', 1).slice(0, 3).map(([k]) => '‘' + k.slice(2) + '’');
+    if (!g.length && !md.length) return '';
+    return `<div class="taste-profile"><span class="muted">내 취향</span>${g.map(x => `<span class="tp like">${esc(x)}</span>`).join('')}${md.map(x => `<span class="tp">${esc(x)}</span>`).join('')}${gx.map(x => `<span class="tp dislike">${esc(x)} 별로</span>`).join('')}</div>`;
+  }
+  function genreFilter() {
+    const chip = (k, e, l, kind) => { const on = (kind === 'like' ? pick.like : pick.dislike).has(k); const other = (kind === 'like' ? pick.dislike : pick.like).has(k);
+      return `<button type="button" class="pk-chip ${kind} ${on ? 'on' : ''} ${other ? 'other' : ''}" data-pk="${kind}" data-genre="${k}" aria-pressed="${on}">${kind === 'dislike' && on ? '✕ ' : ''}${e} ${l}</button>`; };
+    return `<details class="picker-box" ${pick.like.size || pick.dislike.size ? 'open' : ''}><summary>장르로 거르기${pick.like.size || pick.dislike.size ? ` <span class="muted">· ${pick.like.size ? '👍 ' + pick.like.size : ''} ${pick.dislike.size ? '🙅 ' + pick.dislike.size : ''}</span>` : ''}</summary><div class="picker">
+      <div class="pk-row"><div class="pk-label">👍 지금 보고 싶은 장르 <small>고르면 이 장르를 더 앞에 보여 줘요</small></div><div class="pk-chips">${G7.map(([k, e, l]) => chip(k, e, l, 'like')).join('')}</div></div>
+      <div class="pk-row"><div class="pk-label">🙅 빼고 싶은 장르 <small>이 장르 영화는 추천에서 빠져요</small></div><div class="pk-chips">${G7.map(([k, e, l]) => chip(k, e, l, 'dislike')).join('')}</div></div>
+      <div class="pk-row pk-opts">
+        ${pick.like.size || pick.dislike.size ? `<button type="button" class="link muted" data-pk-reset>선택 초기화</button>` : ''}
+        ${hidden.size ? `<button type="button" class="link muted" data-unhide>관심 없음으로 숨긴 영화 ${hidden.size}편 되돌리기</button>` : ''}</div>
+    </div></details>`;
+  }
+  function tasteSummary(rated) {
+    return `<div class="taste-summary"><span>🎬 취향 고르기에서 답한 <b>${rated}편</b>을 바탕으로 추천했어요</span><span class="ts-acts">${recoUI.confirmReset ? `<span class="muted">답을 모두 지울까요?</span><button type="button" class="link danger" data-duel="reset-yes">처음부터 다시</button><button type="button" class="link" data-duel="reset-no">취소</button>` : `<button type="button" class="link" data-duel="edit">✏️ 답 고치기</button><button type="button" class="link muted" data-duel="reset">↺ 처음부터 다시</button>`}</span></div>`;
+  }
+  function pageReco(all) {
+    const D = recoData(all);
+    const rated = SEEDS.filter(s => seenV(myTaste()[s.id])).length;
+    const myFilmN = Object.values(myDoc().films || {}).filter(r => r && r.rating).length;
+    const ready = rated >= MIN_TASTE || myFilmN >= 3;
+    const pickMode = recoUI.mode === 'result' ? !ready : (recoUI.mode === 'pick' || !ready);   // 고르는 동안에는 고르기 화면만 보여 줘요
+    const byScore = [...D.items].sort((a, b) => b.score - a.score);
+    const rows = []; let hero = '';
+    if (ready) {
+      // 맞춤 추천: 상영 중 · 개봉 예정 · OTT — 칸에 마우스를 올리면 그 칸의 영화가 나와요 (취향과 맞는 영화만)
+      // '다른 영화도 추천해 줘요'를 누르면 다음 3편(OTT는 9편): 점수 순서대로 넘기되, 한 장에 같은 장르만 몰리지 않게 골고루 섞어요
+      const good = (x) => x.score > 0.05;
+      const pagesOf = (list, size = 3) => { const rest = [...list]; const pages = []; while (rest.length) { const pg = []; while (pg.length < size && rest.length) { let bi = 0, bs = -Infinity; rest.forEach((x, j) => { const same = pg.filter(y => g7Of(y.m)[0] === g7Of(x.m)[0]).length; const s = x.score - same * 0.2; if (s > bs) { bs = s; bi = j; } }); pg.push(rest.splice(bi, 1)[0]); } pages.push(pg); } return pages; };
+      recoUI.page = recoUI.page || {};
+      const pageOf = (k, list, size = 3) => { const pages = pagesOf(list, size); const n = pages.length; const p = n ? (recoUI.page[k] || 0) % n : 0; return { list: pages[p] || [], p, n, total: list.length }; };
+      const tabs = [
+        ['now', '🎬', '지금 상영 중', '극장에서 볼 수 있어요', pageOf('now', byScore.filter(x => x.m.rel <= 0 && good(x))), recCard, '취향에 맞는 상영작을 찾지 못했어요.'],
+        ['soon', '🗓️', '개봉 예정', '곧 극장에 걸려요', pageOf('soon', byScore.filter(x => x.m.rel > 0 && good(x))), recCard, '취향에 맞는 개봉 예정작이 아직 없어요.'],
+        ['ott', '📺', 'OTT', '구독 서비스로 볼 수 있어요', pageOf('ott', [...D.ott].filter(good).sort((a, b) => b.score - a.score), 9), ottCard, '취향에 맞는 OTT 영화를 찾지 못했어요.']];
+      const cur = tabs.some(t => t[0] === recoUI.tab) ? recoUI.tab : 'now';
+      hero = `<section class="reco-hero"><h3 class="rh-title">🎯 나를 위한 맞춤 추천</h3><p class="muted rh-sub">칸에 마우스를 올리면 그 칸의 추천 영화가 나와요</p>
+        <div class="rh-tabs" role="tablist">${tabs.map(([k, e, l, sub, pg]) => `<button type="button" class="rh-tab${k === cur ? ' on' : ''}" data-rtab="${k}" role="tab" aria-selected="${k === cur}"><span class="rh-e">${e}</span><b>${l}</b><span class="muted">${sub} · ${pg.total}편</span></button>`).join('')}</div>
+        <div class="rh-panels">${tabs.map(([k, , , , pg, card, empty]) => `<div class="rh-panel${k === cur ? ' on' : ''}" data-rpanel="${k}" role="tabpanel">${pg.list.length ? `<div class="rh-cards">${pg.list.map(x => card(x.m, x.why, x.match)).join('')}</div>
+          <div class="rh-more">${pg.n > 1 ? `<button type="button" class="rh-more-btn" data-rmore="${k}">🔄 다른 영화도 추천해 줘요</button><span class="muted">${pg.p + 1} / ${pg.n}</span>` : `<span class="muted">취향에 맞는 영화를 모두 보여 드렸어요</span>`}</div>` : `<div class="note">${empty}</div>`}</div>`).join('')}</div></section>`;
+const cf = D.items.filter(x => x.cf && x.cf.v > 0).sort((a, b) => b.cf.v - a.cf.v || b.cf.k - a.cf.k);
+      rows.push(recRow('👥', '취향이 비슷한 관객이 좋아한 영화', D.nb.length ? `나와 비슷한 관객 ${D.nb.length}명을 찾았어요` : '',
+        cf.slice(0, 10).map(x => recCard(x.m, `비슷한 관객 ${x.cf.k}명이 좋아했어요${x.cf.star ? ` · ★${x.cf.star.toFixed(1)}` : ''}`, x.match)),
+        D.nb.length ? '비슷한 관객이 아직 상영작을 평가하지 않았어요.' : '아직 나와 취향이 비슷한 관객을 찾지 못했어요. 더 많은 사람이 취향을 고르고 별점을 남기면 나타나요.'));
+      // 가장 최근에 좋아한 영화(별점) → 없으면 취향 고르기에서 좋다고 한 영화
+      const lastFilm = Object.entries(myDoc().films || {}).filter(([, r]) => r && r.rating >= 4).sort((a, b) => (b[1].at || 0) - (a[1].at || 0)).map(([id]) => D.ix.get(id)).find(Boolean);
+      const likedSeeds = SEEDS.filter(s => myTaste()[s.id] === 1);
+      const anchor = lastFilm || likedSeeds[Math.floor(Date.now() / 86400000) % Math.max(1, likedSeeds.length)];
+      if (anchor) {
+        const sims = similarTo(anchor, all.filter(m => !(myDoc().films || {})[m.id]?.rating)).slice(0, 10);
+        rows.push(recRow('🎬', `〈${esc(anchor.title)}〉을(를) 좋아했다면`, '장르 · 감독 · 배우 · 분위기가 닮은 영화', sims.map(x => recCard(x.m, sharedLabel(x.shared), 0)), '닮은 영화를 찾지 못했어요.'));
+      }
+    }
+    const pop = [...all].filter(m => !hidden.has(m.id)).sort((a, b) => popScore(b) - popScore(a) || b.rel - a.rel).slice(0, 10);
+    rows.push(recRow('🔥', '지금 SMO에서 인기', '별점 · 리뷰 · 기대돼요 기준', pop.map(m => { const st = statsFor(m.id); const h = hypeCount(m.id); return recCard(m, st.n ? `★${st.avg.toFixed(1)} · 리뷰 ${st.n}` : h ? `🍿 기대 ${h}` : (m.rel > 0 ? '개봉 예정' : '상영 중'), 0); }), '영화가 없어요.'));
+    return listIntro('추천', '재밌게 본 영화를 몇 편 골라 주면, 비슷한 영화와 나와 취향이 비슷한 관객이 좋아한 영화를 찾아 드려요. 넷플릭스처럼 별점을 남길수록 더 잘 맞아져요.', null) + subNav('movies-picks') + `<div class="list-gap"></div>` +
+      (pickMode ? tasteBox() : tasteSummary(rated) + hero + profileChips(D.P) + genreFilter() + rows.join(''));
+  }
+  const rerenderKeep = () => { const y = window.scrollY; render(); window.scrollTo(0, y); };
+  document.addEventListener('click', async (e) => {
+    const tb = e.target.closest('[data-taste]');
+    if (tb) {
+      const [sid, v] = tb.dataset.taste.split('|'); recoUI.open = true; recoUI.mode = 'pick'; await setTaste(sid, +v);
+      const pi = recoUI.deck.findIndex(p => p.includes(sid)); const t = myTaste();
+      recoUI.pair = pi; rerenderKeep();
+      if (pi >= 0 && pairDone(recoUI.deck[pi], t)) setTimeout(() => { if (recoUI.pair === pi) { advance(pi); rerenderKeep(); } }, 450);
+      return;
+    }
+    const dv = e.target.closest('[data-duel]');
+    if (dv) {
+      const [act, k] = dv.dataset.duel.split('|');
+      if (act === 'reset' || act === 'reset-no') { recoUI.confirmReset = act === 'reset'; rerenderKeep(); return; }
+      if (act === 'done') { recoUI.mode = 'result'; rerenderKeep(); window.scrollTo(0, 0); return; }
+      if (act === 'edit') { recoUI.mode = 'pick'; recoUI.pair = null; rerenderKeep(); window.scrollTo(0, 0); return; }
+      if (act === 'reset-yes') {   // 취향 답을 모두 지우고 첫 쌍부터
+        localTaste = {}; saveJSON(TASTE_KEY, {});
+        if (myId && canWrite && storeState === 'ready') { try { await saveMyDoc({ taste: {} }); } catch {} }
+        Object.assign(recoUI, { pair: null, deck: [], page: {}, open: true, confirmReset: false, mode: 'pick' });   // 새 덱: 지난번에 안 나온 영화부터
+        toast('취향 답을 지웠어요. 처음부터 다시 골라 주세요'); rerenderKeep(); document.getElementById('taste-box')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return;
+      }
+      const i = curPair(myTaste());
+      if (act === 'prev') recoUI.pair = Math.max(0, i - 1);
+      else if (act === 'next') { if (i < recoUI.deck.length - 1) recoUI.pair = i + 1; else advance(i); }
+      else if (act === 'skip') { await setTaste(recoUI.deck[i], 0, true); advance(i); }
+      rerenderKeep(); return;
+    }
+    const rm = e.target.closest('[data-rmore]');
+    if (rm) { const k = rm.dataset.rmore; recoUI.page = recoUI.page || {}; recoUI.page[k] = (recoUI.page[k] || 0) + 1; recoUI.tab = k; rerenderKeep(); try { dropIn(document.querySelector('[data-rpanel="' + k + '"]')); } catch {} return; }
+    const hb = e.target.closest('[data-hide]');
+    if (hb) { e.preventDefault(); hidden.add(hb.dataset.hide); saveJSON(HIDE_KEY, [...hidden]); toast('이 영화는 추천에서 뺐어요'); rerenderKeep(); return; }
+    if (e.target.closest('[data-unhide]')) { hidden = new Set(); saveJSON(HIDE_KEY, []); rerenderKeep(); return; }
     const c = e.target.closest('[data-pk]');
     if (c) {
       const g = c.dataset.genre, kind = c.dataset.pk;
       const set = kind === 'like' ? pick.like : pick.dislike, other = kind === 'like' ? pick.dislike : pick.like;
-      if (set.has(g)) set.delete(g); else { set.add(g); other.delete(g); }   // 같은 장르를 '좋아요'와 '빼기'에 동시에 넣지 않음
-      savePick(); const y = window.scrollY; render(); window.scrollTo(0, y);
-      return;
+      if (set.has(g)) set.delete(g); else { set.add(g); other.delete(g); }
+      savePick(); rerenderKeep(); return;
     }
-    if (e.target.closest('[data-pk-reset]')) { pick.like.clear(); pick.dislike.clear(); savePick(); const y = window.scrollY; render(); window.scrollTo(0, y); }
+    if (e.target.closest('[data-pk-reset]')) { pick.like.clear(); pick.dislike.clear(); savePick(); rerenderKeep(); }
   });
+  // 맞춤 추천 칸: 마우스를 올리거나(데스크톱) 누르면(휴대폰) 그 칸의 영화로 바꿔요
+  function showRTab(k) {
+    recoUI.tab = k;
+    document.querySelectorAll('[data-rtab]').forEach(b => { const on = b.dataset.rtab === k; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
+    document.querySelectorAll('[data-rpanel]').forEach(p => p.classList.toggle('on', p.dataset.rpanel === k));
+    try { fitText(document.querySelector('.rh-panels')); } catch {}
+  }
+  ['mouseover', 'focusin', 'click'].forEach(ev => document.addEventListener(ev, (e) => { const b = e.target.closest?.('[data-rtab]'); if (b && (ev === 'click' || recoUI.tab !== b.dataset.rtab)) showRTab(b.dataset.rtab); }));  document.addEventListener('toggle', (e) => { if (e.target.id === 'taste-box') recoUI.open = e.target.open; }, true);
   document.addEventListener('change', (e) => {
-    if (e.target.id === 'pk-soon') { pick.soon = e.target.checked; savePick(); const y = window.scrollY; render(); window.scrollTo(0, y); }
+    if (e.target.id === 'pk-soon') { pick.soon = e.target.checked; savePick(); rerenderKeep(); }
   });
+  /*RECO-END*/
 
   /* ---------- 두 번째 화면: 고른 항목만 보여 주는 목록 ---------- */
   const LISTS = { movies: 1, 'movies-picks': 1, 'movies-now': 1, 'movies-soon': 1, 'movies-reviews': 1, 'movies-perks': 1, concerts: 1, venues: 1 };
-  function subNav(kind) {
+  // 하위 항목에 마우스를 올리면 그 목록을 바로 보여 주고, 포스터·카드가 위에서 차례로 떨어지듯 나와요
+  function dropIn(root) {
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    root.querySelectorAll('.works > .work, .rv-card, .perk-movie, .pm, .rec-item, .venue-card, .rec-row, .taste-box, .reco-hero, .group-label, .note').forEach((el, i) => {
+      el.style.animation = `dropIn .5s cubic-bezier(.2,.7,.2,1) ${Math.min(i, 24) * 40}ms backwards`;
+    });
+  }
+  let subHoverTimer = null;
+  document.addEventListener('mouseover', (e) => {
+    const a = e.target.closest('.subnav a[href^="#"]');
+    if (!a || a.getAttribute('aria-current') === 'page') return;
+    clearTimeout(subHoverTimer);
+    subHoverTimer = setTimeout(() => {   // 잠깐(0.12초) 머물렀을 때만 바꿔요 (지나가기만 하면 그대로)
+      const target = a.getAttribute('href');
+      if (location.hash === target) return;
+      try { history.replaceState(null, '', target); } catch { location.hash = target; return; }
+      started = true; render(); dropIn($('page'));
+      document.querySelectorAll('.subnav a').forEach(x => { if (x.getAttribute('href') === target) x.setAttribute('aria-current', 'page'); else x.removeAttribute('aria-current'); });
+    }, 120);
+  });
+  document.addEventListener('mouseout', (e) => { if (e.target.closest('.subnav a')) clearTimeout(subHoverTimer); });  function subNav(kind) {
     const tabs = [['movies', '전체'], ['movies-picks', '추천'], ['movies-now', '개봉작'], ['movies-soon', '개봉예정작'], ['movies-reviews', '후기'], ['movies-perks', '특전']];
     return `<nav class="subnav" aria-label="영화 목록 종류">${tabs.map(([k, l]) => `<a href="#${k}"${k === kind ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
   }
@@ -1480,18 +1882,7 @@
       return listIntro('개봉작', '지금 극장에서 상영 중인 영화예요. 포스터를 누르면 시놉시스, 예고편, 정보, 리뷰를 볼 수 있어요.', now.length) + subNav(kind) + `<div class="list-gap"></div>` + posterGrid(now, '상영 중인 영화가 없어요.');
     if (kind === 'movies-soon')
       return listIntro('개봉예정작', '곧 개봉하는 영화예요. 🍿 기대돼요를 눌러 기대지수를 올려 보세요.', soon.length) + subNav(kind) + `<div class="list-gap"></div>` + posterGrid(soon, '개봉 예정인 영화가 없어요.');
-    if (kind === 'movies-picks') {
-      const recs = recommend(all);
-      const liked = [...pick.like], disliked = [...pick.dislike];
-      const summary = liked.length || disliked.length
-        ? `${liked.length ? `👍 ${liked.map(esc).join(' · ')}` : ''}${liked.length && disliked.length ? '&nbsp;&nbsp;' : ''}${disliked.length ? `🙅 ${disliked.map(esc).join(' · ')} 제외` : ''}`
-        : '장르를 고르지 않아서 평균 별점이 높은 순서로 보여 줘요.';
-      const empty = liked.length ? '고른 장르에 맞는 영화가 없어요. 장르를 더 고르거나 ‘개봉 예정작도 포함’을 켜 보세요.' : '추천할 영화가 없어요. 빼고 싶은 장르를 줄여 보세요.';
-      return listIntro('추천', '좋아하는 장르나 지금 보고 싶은 장르를 여러 개 고르고, 싫은 장르는 빼 보세요. 취향에 맞는 영화를 골라 드려요.', null) + subNav(kind) + `<div class="list-gap"></div>` +
-        genrePicker(all) +
-        `<div class="pk-result"><span>추천 결과 <b>${recs.length}</b>편</span><span class="muted">${summary}</span></div>` +
-        (recs.length ? `<div class="works">${recs.map(x => recWork(x)).join('')}</div>` : `<div class="note">${empty}</div>`);
-    }
+    if (kind === 'movies-picks') return pageReco(all);
     if (kind === 'movies-reviews') {
       const recent = [];
       reviewDocs.forEach(d => Object.entries(d.films || {}).forEach(([fid, r]) => { if (r && (r.title || r.text)) { const m = all.find(x => x.id === fid); if (m) recent.push({ m, r, uid: d.uid }); } }));
@@ -1534,6 +1925,7 @@
     if (r.view === 'home') page.innerHTML = pageHome();
     else if (r.view === 'list') {
       page.innerHTML = pageList(r.kind, r);
+      if (!fromData) dropIn(page);
       fillNames([...new Set([...page.querySelectorAll('[data-name]')].map(e => e.dataset.name))]);
     }
     else if (r.view === 'venue') {
@@ -1562,6 +1954,29 @@
       page.innerHTML = pageEditor(m);
     }
   }
+  /* ---------- TMDB: 포스터가 없는 영화는 TMDB에서 자동으로 찾아요 (js/tmdb-config.js 의 키 사용) ---------- */
+  const TMDB_KEY = window.SMO_TMDB_KEY || '';
+  const tmdbCache = (() => { try { return JSON.parse(localStorage.getItem('smo.tmdb.v1')) || {}; } catch { return {}; } })();
+  const tmdbPending = new Set();
+  const tmdbKeyOf = (m) => (m.title || '') + '|' + String(m.date || '').slice(0, 4);
+  function tmdbPoster(m) { const v = tmdbCache[tmdbKeyOf(m)]; return v ? 'https://image.tmdb.org/t/p/w342' + v : ''; }
+  async function tmdbSearch(title, year) {
+    const u = `https://api.themoviedb.org/3/search/movie?api_key=${encodeURIComponent(TMDB_KEY)}&language=ko-KR&query=${encodeURIComponent(title)}${year ? '&year=' + year : ''}`;
+    const r = await (await fetch(u)).json(); return (r.results || []).find(x => x.poster_path) || null;
+  }
+  async function tmdbAuto() {
+    if (!TMDB_KEY) return;
+    const need = allMovies().filter(m => !m.poster && !m.posterId && !(tmdbKeyOf(m) in tmdbCache) && !tmdbPending.has(tmdbKeyOf(m))).slice(0, 12);
+    if (!need.length) return;
+    need.forEach(m => tmdbPending.add(tmdbKeyOf(m)));
+    let changed = false;
+    for (const m of need) {
+      try { const y = String(m.date || '').slice(0, 4); const hit = (await tmdbSearch(m.title, y)) || (await tmdbSearch(m.title, '')); tmdbCache[tmdbKeyOf(m)] = hit ? hit.poster_path : ''; changed = true; } catch {}
+    }
+    if (changed) { try { localStorage.setItem('smo.tmdb.v1', JSON.stringify(tmdbCache)); } catch {} renderBase(true); }
+  }
+  const renderBase = render;
+  render = function (fromData) { renderBase(fromData); tmdbAuto(); };
   window.addEventListener('hashchange', () => {
     started = true; confirmDelMovie = null; closeFly(true); render();
     const r = currentRoute();
